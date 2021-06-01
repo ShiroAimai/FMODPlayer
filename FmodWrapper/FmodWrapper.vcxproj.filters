@@ -24,12 +24,18 @@
     <ClInclude Include="Wrapper.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="FMODWrapperResult.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="Wrapper.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="FMODWrapperResult.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>

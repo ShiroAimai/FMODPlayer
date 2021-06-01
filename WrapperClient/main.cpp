@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include "Wrapper.h"
+#include "FMODWrapperResult.h"
 
 #define PATH_MAX_LENGTH 255
 
@@ -43,13 +44,13 @@ void ShowOptions() {
 		cout << endl;
 		error.clear();
 	}
-	cout << "Setup:" << endl;
-	cout << "1) Load a new media" << endl;
-	cout << "2) Load a new media as Stream" << endl;
-	cout << "=============" << endl;
 	cout << "Media:" << endl;
+	cout << "1) Load" << endl;
+	cout << "2) Load Stream" << endl;
 	cout << "3) Play" << endl;
 	cout << "4) Play loop" << endl;
+	cout << "=============" << endl;
+	cout << "Channel:" << endl;
 	cout << "5) Pause" << endl;
 	cout << "6) Stop" << endl;
 	cout << "7) Pan" << endl;
@@ -98,7 +99,7 @@ void Play(bool ShouldLoop)
 
 		string new_resource_id;
 		getline(cin, new_resource_id);
-		int resource_id = NCWrapper::Wrapper::WRAPPER_INVALID_RESOURCE_ID;
+		int resource_id = 0;
 
 		if (!new_resource_id.empty()) {
 			resource_id = atoi(new_resource_id.c_str());
@@ -144,7 +145,7 @@ void Pause()
 
 		string new_resource_id;
 		getline(cin, new_resource_id);
-		int resource_id = NCWrapper::Wrapper::WRAPPER_INVALID_RESOURCE_ID;
+		int resource_id = 0;
 
 		if (!new_resource_id.empty()) {
 			resource_id = atoi(new_resource_id.c_str());
@@ -177,7 +178,7 @@ void Stop()
 
 		string new_resource_id;
 		getline(cin, new_resource_id);
-		int resource_id = NCWrapper::Wrapper::WRAPPER_INVALID_RESOURCE_ID;
+		int resource_id = 0;
 
 		if (!new_resource_id.empty()) {
 			resource_id = atoi(new_resource_id.c_str());
@@ -211,7 +212,7 @@ void SetPan()
 
 		string inserted_resource_id;
 		getline(cin, inserted_resource_id);
-		int resource_id = NCWrapper::Wrapper::WRAPPER_INVALID_RESOURCE_ID;
+		int resource_id = 0;
 
 		if (!inserted_resource_id.empty()) {
 			resource_id = atoi(inserted_resource_id.c_str());
@@ -250,7 +251,7 @@ void SetVolume()
 		cin.ignore();
 		string inserted_resource_id;
 		getline(cin, inserted_resource_id);
-		int resource_id = NCWrapper::Wrapper::WRAPPER_INVALID_RESOURCE_ID;
+		int resource_id = 0;
 
 		if (!inserted_resource_id.empty()) {
 			resource_id = atoi(inserted_resource_id.c_str());
@@ -318,8 +319,7 @@ bool InitWrapper()
 		total_channels = atoi(new_max_channels.c_str());
 	}
 
-	FMODWrapperResult InitResult;
-	wrapper = Wrapper::Init(InitResult, absoulute_resources_path, total_channels);
+	FMODWrapperResult InitResult = Wrapper::Init(&wrapper, absoulute_resources_path, total_channels);
 
 	if (!InitResult.IsValid())
 	{
