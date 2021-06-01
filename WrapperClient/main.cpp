@@ -75,13 +75,15 @@ void ShowOptions() {
 	{
 		cout << "=============" << endl;
 		cout << "Available Channels:" << endl;
-		cout << "ID" << " | " << "Media ID" << " | " << "Playback Time" << " | " << "Volume" << " | ";
-		cout << "Pan" << " | " << "State" << endl;
+		cout << "ID" << " | " << "Media ID" << " | " << " Time" << " | ";
+		cout << "Pan" << " | " << "Volume" << " | ";
+		cout << "State" << endl;
 
 		for (const ChannelState& channelState : availableChannelsState)
 		{
-			cout << channelState.channelId << " | " << channelState.mediaId << " | " << channelState.mediaTime << " | ";
-			cout << channelState.volume << " | " << channelState.pan << " | ";
+			cout << channelState.channelId << " | " << channelState.mediaId << " | ";
+			cout << channelState.mediaCurrentTime << "/" << channelState.mediaTotalTime << " | ";
+			cout << channelState.pan << " | " << channelState.volume << " | ";
 			cout << ChannelState::to_string(channelState.playingState) << endl;
 		}
 	}

@@ -22,6 +22,7 @@ namespace NCWrapper {
 		};
 		struct NCChannel {
 			int m_bound_media_id;
+			float m_channel_pan; //clamped by the container class in the interval [-1, 1]
 			FMOD::Channel* m_channel;
 
 			NCChannel();

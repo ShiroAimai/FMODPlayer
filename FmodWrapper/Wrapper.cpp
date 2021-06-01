@@ -8,7 +8,6 @@ using std::cout;
 using std::endl;
 
 namespace NCWrapper {
-
 #pragma region NCMedia
 	int Wrapper::NCMedia::INVALID_MEDIA_ID = -1;
 
@@ -26,7 +25,10 @@ namespace NCWrapper {
 
 #pragma endregion
 #pragma region NCChannel
-	Wrapper::NCChannel::NCChannel() : m_bound_media_id(NCMedia::INVALID_MEDIA_ID),m_channel(nullptr)
+	Wrapper::NCChannel::NCChannel() : 
+		m_bound_media_id(NCMedia::INVALID_MEDIA_ID),
+		m_channel(nullptr),
+		m_channel_pan(0.f)
 	{
 
 	}
@@ -86,7 +88,7 @@ namespace NCWrapper {
 	{
 		for (int i = 0; i < m_Channels.size(); ++i)
 		{
-			NCChannel channel = m_Channels[i];
+			const NCChannel& channel = m_Channels[i];
 			ChannelState _channelState;
 			_channelState.channelId = i;
 			
@@ -96,15 +98,22 @@ namespace NCWrapper {
 			
 			unsigned int mediaPlayingTime;
 			channel.m_channel->getPosition(&mediaPlayingTime, FMOD_TIMEUNIT_MS);
-			_channelState.mediaTime = isPLaying ? mediaPlayingTime / 1000 : 0;
+			_channelState.mediaCurrentTime = isPLaying ? mediaPlayingTime / 1000 : 0;
 			
+			_channelState.mediaTotalTime = 0.f;
+			if (isPLaying)
+			{
+				const NCMedia& media = m_Resources[channel.m_bound_media_id];
+				unsigned int mediaTotalTime = 0;
+				media.m_sound->getLength(&mediaTotalTime, FMOD_TIMEUNIT_MS);
+				_channelState.mediaTotalTime = mediaTotalTime / 1000;
+			}
+
+			_channelState.pan = isPLaying ? channel.m_channel_pan : 0.f;
+
 			float volume = 0;
 			channel.m_channel->getVolume(&volume);
-			_channelState.volume = volume;
-			
-			float panLevel = 0;
-			channel.m_channel->get3DLevel(&panLevel);
-			_channelState.pan = panLevel;
+			_channelState.volume = isPLaying ? volume * 100 : 0; //de-normalize volume			
 
 			if(isPLaying)
 			{
@@ -195,7 +204,7 @@ namespace NCWrapper {
 		result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
-		NCChannel ChannelToPause = m_Channels[channel];
+		NCChannel& ChannelToPause = m_Channels[channel];
 
 		bool IsPlaying = false;
 		result.Update(ChannelToPause.m_channel->isPlaying(&IsPlaying));
@@ -222,7 +231,7 @@ namespace NCWrapper {
 		result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
-		NCChannel ChannelToStop = m_Channels[channel];
+		NCChannel& ChannelToStop = m_Channels[channel];
 
 		bool IsPlaying = false;
 		result.Update(ChannelToStop.m_channel->isPlaying(&IsPlaying));
@@ -250,7 +259,7 @@ namespace NCWrapper {
 		FMODWrapperResult result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
-		if (pan < MIN_2D_PAN && pan > MAX_2D_PAN)
+		if (pan < MIN_2D_PAN || pan > MAX_2D_PAN)
 		{
 			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
 			result.msg.append(
@@ -263,7 +272,7 @@ namespace NCWrapper {
 			return result;
 		}
 		
-		NCChannel ChannelToModify = m_Channels[channel];
+		NCChannel& ChannelToModify = m_Channels[channel];
 		if (!ChannelToModify.m_channel || !result.IsValid()) return result;
 
 		result.Update(ChannelToModify.m_channel->setPan(pan));
@@ -272,6 +281,8 @@ namespace NCWrapper {
 		{
 			result.msg.append("A problem has been detected trying to modify PAN value for channel " + std::to_string(channel));			
 		}
+
+		ChannelToModify.m_channel_pan = pan; //now we can safely set the pan
 
 		return result;
 	}
@@ -294,7 +305,7 @@ namespace NCWrapper {
 			return result;			
 		}
 
-		NCChannel ChannelToModify = m_Channels[channel];
+		NCChannel& ChannelToModify = m_Channels[channel];
 		if (!ChannelToModify.m_channel || !result.IsValid()) return result;
 
 		float normalizedVolume = volume / MAX_VOLUME;
