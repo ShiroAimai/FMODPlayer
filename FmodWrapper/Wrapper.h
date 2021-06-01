@@ -7,7 +7,8 @@
 
 namespace NCWrapper {
 	struct FMODWrapperResult;
-	
+	struct ChannelState;
+
 	class Wrapper
 	{
 	private:
@@ -38,7 +39,10 @@ namespace NCWrapper {
 
 		int GetTotalNumberOfChannels() const;
 		int GetNumberOfAvailableResourcesToPlay() const;
-		void GetLoadedMediaNames(std::vector <std::string>& loaded_media_names);
+		void GetLoadedMediaNames(std::vector <std::string>& OutLoadedMediaNames) const;;
+		void GetAllChannelsState(std::vector<ChannelState>& channelsState) const;
+		
+		~Wrapper();
 #pragma region FMOD Wrap
 		FMODWrapperResult Load(const std::string& media_name);
 		FMODWrapperResult LoadStreaming(const std::string& media_name);

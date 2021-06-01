@@ -2,6 +2,8 @@
 #include <iostream>
 #include "Wrapper.h"
 #include "FMODWrapperResult.h"
+#include "ChannelState.h"
+
 using std::cout;
 using std::endl;
 
@@ -74,15 +76,61 @@ namespace NCWrapper {
 		return m_Resources.size();
 	}
 
-	void Wrapper::GetLoadedMediaNames(std::vector <std::string>& loaded_media_names)
+	void Wrapper::GetLoadedMediaNames(std::vector <std::string>& OutLoadedMediaNames) const
 	{
 		for (auto media : m_Resources)
-			loaded_media_names.push_back(media.m_mediaName);
+			OutLoadedMediaNames.push_back(media.m_mediaName);
+	}
+
+	void Wrapper::GetAllChannelsState(std::vector<ChannelState>& channelsState) const
+	{
+		for (int i = 0; i < m_Channels.size(); ++i)
+		{
+			NCChannel channel = m_Channels[i];
+			ChannelState _channelState;
+			_channelState.channelId = i;
+			
+			bool isPLaying;
+			channel.m_channel->isPlaying(&isPLaying);
+			_channelState.mediaId = isPLaying ? channel.m_bound_media_id : NCMedia::INVALID_MEDIA_ID;
+			
+			unsigned int mediaPlayingTime;
+			channel.m_channel->getPosition(&mediaPlayingTime, FMOD_TIMEUNIT_MS);
+			_channelState.mediaTime = isPLaying ? mediaPlayingTime / 1000 : 0;
+			
+			float volume = 0;
+			channel.m_channel->getVolume(&volume);
+			_channelState.volume = volume;
+			
+			float panLevel = 0;
+			channel.m_channel->get3DLevel(&panLevel);
+			_channelState.pan = panLevel;
+
+			if(isPLaying)
+			{
+				bool paused;
+				channel.m_channel->getPaused(&paused);
+				_channelState.playingState = paused
+					? ChannelState::ChannelPlayingState::PAUSED
+					: ChannelState::ChannelPlayingState::PLAYING;
+			}
+			else 
+			{
+				_channelState.playingState = ChannelState::ChannelPlayingState::STOPPED;
+			}
+
+			channelsState.push_back(_channelState);
+		}
 	}
 
 	Wrapper::Wrapper() : m_FMOD_Instance(nullptr)
 	{
 		//make constructor private in order to force call to factory method
+	}
+
+	Wrapper::~Wrapper()
+	{
+		m_FMOD_Instance->release();
 	}
 
 	FMODWrapperResult Wrapper::InitFMODSystem(const std::string& absolute_resources_path, int channels)

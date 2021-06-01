@@ -5,6 +5,7 @@
 #include <string>
 #include "Wrapper.h"
 #include "FMODWrapperResult.h"
+#include "ChannelState.h"
 
 #define PATH_MAX_LENGTH 255
 
@@ -56,9 +57,9 @@ void ShowOptions() {
 	{
 		cout << "=============" << endl;
 		cout << "Available Media:" << endl;
-		cout << "ID" << " " << "Name" <<  endl;
+		cout << "ID" << " | " << "Name" <<  endl;
 		for(int i = 0; i < loadedMediaNames.size(); ++i)
-			cout << i << " " << loadedMediaNames[i] << endl;
+			cout << i << " | " << loadedMediaNames[i] << endl;
 	}
 	
 	cout << "=============" << endl;
@@ -67,6 +68,23 @@ void ShowOptions() {
 	cout << "6) Stop" << endl;
 	cout << "7) Pan" << endl;
 	cout << "8) Volume" << endl;
+	
+	std::vector<ChannelState> availableChannelsState;
+	wrapper->GetAllChannelsState(availableChannelsState);
+	if (availableChannelsState.size() > 0)
+	{
+		cout << "=============" << endl;
+		cout << "Available Channels:" << endl;
+		cout << "ID" << " | " << "Media ID" << " | " << "Playback Time" << " | " << "Volume" << " | ";
+		cout << "Pan" << " | " << "State" << endl;
+
+		for (const ChannelState& channelState : availableChannelsState)
+		{
+			cout << channelState.channelId << " | " << channelState.mediaId << " | " << channelState.mediaTime << " | ";
+			cout << channelState.volume << " | " << channelState.pan << " | ";
+			cout << ChannelState::to_string(channelState.playingState) << endl;
+		}
+	}
 	cout << "=============" << endl;
 	cout << "E) Exit" << endl;
 	cout << endl;
