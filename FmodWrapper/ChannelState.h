@@ -12,9 +12,11 @@ namespace NCWrapper {
 
 		int channelId;
 		int mediaId;
-		float mediaTime;
-		float volume;
+		float mediaCurrentTime;
+		float mediaTotalTime;
 		float pan;
+		float volume;
+
 		ChannelPlayingState playingState;
 
 		static std::string to_string(ChannelPlayingState state);		
