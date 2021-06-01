@@ -3,6 +3,7 @@
 #include <string>
 #include <fmod.hpp>
 #include <map>
+#include <vector>
 
 namespace NCWrapper {
 	struct FMODWrapperResult;
@@ -29,6 +30,7 @@ namespace NCWrapper {
 		static float MIN_VOLUME;
 		static float MAX_2D_PAN;
 		static float MIN_2D_PAN;
+		static int MAX_CHANNELS;
 
 		static FMODWrapperResult Init(Wrapper** OutWrapperInstance, std::string& absolute_resources_path, int channels);
 
@@ -53,22 +55,19 @@ namespace NCWrapper {
 		FMODWrapperResult InitFMODSystem(const std::string& absolute_resources_path, int channels);
 		FMODWrapperResult LoadAudio(const std::string& media_name, bool stream);
 		FMODWrapperResult PlayAudio(int resource_ID, int channel, bool loop);
-		void AddResource(const std::string& media_name, FMOD::Sound* sound);
 		FMODWrapperResult ValidateResourceId(const int resource_id) const;
 		FMODWrapperResult ValidateChannel(const int channel) const;
 		FMODWrapperResult ValidateResourceOperation() const;
 
 		FMOD::System* m_FMOD_Instance = nullptr;
 		
-		int m_ResourcesSize = 0;
-		//resource_id, media
-		std::map<int, NCMedia> m_Resources; //loaded media
+		//// LOADED MEDIA ////
+		std::vector<NCMedia> m_Resources;
 
-		////// CHANNELS ///////
-		int m_channel_total = 0;
-		NCChannel* m_Channels;
+		//// CHANNEL////
+		std::vector<NCChannel> m_Channels;
 
-		//// MEDIA ////
+		//// MEDIA PATH////
 		std::string m_absolute_resources_path;
 	};
 }

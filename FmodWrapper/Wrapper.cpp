@@ -47,18 +47,19 @@ namespace NCWrapper {
 	float Wrapper::MIN_VOLUME = 0.f;
 	float Wrapper::MAX_2D_PAN = 1.f; //rightmost
 	float Wrapper::MIN_2D_PAN = -1.f; //leftmost
+	int Wrapper::MAX_CHANNELS = 12;
 
 	int Wrapper::GetTotalNumberOfChannels() const
 	{
-		return m_channel_total;
+		return m_Channels.size();
 	}
 
 	int Wrapper::GetNumberOfAvailableResourcesToPlay() const
 	{
-		return m_ResourcesSize;
+		return m_Resources.size();
 	}
 
-	Wrapper::Wrapper() : m_FMOD_Instance(nullptr), m_Channels(nullptr)
+	Wrapper::Wrapper() : m_FMOD_Instance(nullptr)
 	{
 		//make constructor private in order to force call to factory method
 	}
@@ -82,8 +83,7 @@ namespace NCWrapper {
 			return result;
 		}
 
-		m_Channels = new NCChannel[channels];
-		m_channel_total = channels;
+		m_Channels.resize(channels);
 
 		m_absolute_resources_path = absolute_resources_path;
 
@@ -260,7 +260,7 @@ namespace NCWrapper {
 
 		if (!result.IsValid()) return result;
 
-		AddResource(media_name, sound);
+		m_Resources.push_back(NCMedia(media_name, sound));
 
 		return result;
 	}
@@ -269,8 +269,9 @@ namespace NCWrapper {
 	{
 		FMODWrapperResult result = ValidateResourceId(resource_ID);
 		if (!result.IsValid()) return result;
+
 		result = ValidateChannel(channel);
-		if (!result.IsValid()) return result;
+		if (!result.IsValid()) return result;		
 
 		NCMedia& media = m_Resources[resource_ID];
 		result.Update(media.m_sound->setMode(loop == true ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF));
@@ -313,16 +314,9 @@ namespace NCWrapper {
 		return result;
 	}
 
-	void Wrapper::AddResource(const std::string& media_name, FMOD::Sound* sound)
-	{
-		NCMedia NewMediaResource(media_name, sound);
-		m_Resources.insert(std::pair<int, NCMedia>(m_ResourcesSize, NewMediaResource));
-		m_ResourcesSize++;
-	}
-
 	FMODWrapperResult Wrapper::ValidateResourceId(const int resource_id) const
 	{
-		bool IsValid = resource_id != NCMedia::INVALID_MEDIA_ID && resource_id >= 0 && resource_id < m_ResourcesSize;
+		bool IsValid = resource_id != NCMedia::INVALID_MEDIA_ID && resource_id >= 0 && resource_id < m_Resources.size();
 		FMODWrapperResult result;
 		result.code = IsValid
 			? FMODWrapperResult::FMODWrapperResultCode::OK
@@ -338,7 +332,7 @@ namespace NCWrapper {
 
 	NCWrapper::FMODWrapperResult Wrapper::ValidateChannel(const int channel) const
 	{		
-		bool IsValid = channel >= 0 && channel < m_channel_total;
+		bool IsValid = channel >= 0 && channel < m_Channels.size();
 
 		FMODWrapperResult result;
 		result.code = IsValid
@@ -355,7 +349,7 @@ namespace NCWrapper {
 
 	FMODWrapperResult Wrapper::ValidateResourceOperation() const
 	{
-		bool IsValid = m_ResourcesSize > 0;
+		bool IsValid = m_Resources.size() > 0;
 		FMODWrapperResult result;
 		result.code = IsValid
 			? FMODWrapperResult::FMODWrapperResultCode::OK
