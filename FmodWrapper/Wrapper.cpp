@@ -5,31 +5,54 @@ using std::cout;
 using std::endl;
 
 namespace NCWrapper {
-	namespace {
-		// =================================================
-		// UTILITIES
-		// =================================================
-		bool CheckOperationResult(FMOD_RESULT result) {
-			if (result != FMOD_OK)
-			{
-				printf(FMOD_ErrorString(result));
-				printf("\n");
-				return false;
-			}
-			return true;
-		}
+	
+	FMODWrapperResult FMODWrapperResult::From(FMOD_RESULT result)
+	{
+		FMODWrapperResult wrapperResult;
+		wrapperResult.code = result == FMOD_OK
+			? FMODWrapperResult::FMODWrapperResultCode::OK
+			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
+		wrapperResult.msg = FMOD_ErrorString(result);
+
+		return wrapperResult;
 	}
 
-	Wrapper* Wrapper::Init(const std::string& absolute_resources_path, int channels)
+	void FMODWrapperResult::Update(FMOD_RESULT result)
+	{
+		code = result == FMOD_OK
+			? FMODWrapperResult::FMODWrapperResultCode::OK
+			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
+		msg = FMOD_ErrorString(result);
+	}
+
+	bool FMODWrapperResult::IsValid() const
+	{
+		return code == FMODWrapperResultCode::OK;
+	}
+
+	Wrapper::Media::Media() : m_mediaName(""), m_sound(nullptr), m_channel_id(INVALID_CHANNEL_ID)
+	{
+
+	}
+
+	Wrapper::Media::Media(const std::string& name, FMOD::Sound* sound) :
+		m_mediaName(name),
+		m_sound(sound),
+		m_channel_id(Wrapper::INVALID_CHANNEL_ID)
+	{
+
+	}
+
+	Wrapper* Wrapper::Init(FMODWrapperResult& result, std::string& absolute_resources_path, int channels)
 	{
 		Wrapper* SystemInitialized = new Wrapper();
 
-		FMOD_RESULT res = SystemInitialized->InitFMODSystem(absolute_resources_path, channels);
-
-		return CheckOperationResult(res) == false ? nullptr : SystemInitialized;
+		result = SystemInitialized->InitFMODSystem(absolute_resources_path, channels);
+		return SystemInitialized;
 	}
 
 	int Wrapper::WRAPPER_INVALID_RESOURCE_ID = -1;
+	int Wrapper::INVALID_CHANNEL_ID = -1;
 	float Wrapper::MAX_VOLUME = 100.f;
 	float Wrapper::MIN_VOLUME = 0.f;
 	float Wrapper::MAX_2D_PAN = 1.f; //rightmost
@@ -50,22 +73,22 @@ namespace NCWrapper {
 		//make constructor private in order to force call to factory method
 	}
 
-	FMOD_RESULT Wrapper::InitFMODSystem(const std::string& absolute_resources_path, int channels)
+	FMODWrapperResult Wrapper::InitFMODSystem(const std::string& absolute_resources_path, int channels)
 	{
-		FMOD_RESULT result;
-		result = FMOD::System_Create(&m_FMOD_Instance);
+		FMODWrapperResult result;
+		result.Update(FMOD::System_Create(&m_FMOD_Instance));
 
-		if (!CheckOperationResult(result))
+		if(!result.IsValid())
 		{
-			cout << "FMOD Instance initialization failed with error " << endl;
+			result.msg.append("FMOD System Creation failed with error");
 			return result;
 		}
 
-		result = m_FMOD_Instance->init(channels, FMOD_INIT_NORMAL, 0);
+		result.Update(m_FMOD_Instance->init(channels, FMOD_INIT_NORMAL, 0));
 
-		if (!CheckOperationResult(result))
+		if (!result.IsValid())
 		{
-			cout << "FMOD Instance initialization failed with error " << endl;
+			result.msg.append("FMOD Instance initialization failed with error");
 			return result;
 		}
 
@@ -77,208 +100,296 @@ namespace NCWrapper {
 		return result;
 	}
 
-	bool Wrapper::IsSystemInitialized() const
+	FMODWrapperResult Wrapper::Load(const std::string& media_name)
 	{
-		return m_FMOD_Instance != NULL;
+		return LoadAudio(media_name, false);
 	}
 
-	void Wrapper::Load(const std::string& media_name)
+	FMODWrapperResult Wrapper::LoadStreaming(const std::string& media_name)
 	{
-		if (!IsSystemInitialized()) return;
-
-		LoadAudio(media_name, false);
+		return LoadAudio(media_name, true);
 	}
 
-	void Wrapper::LoadStreaming(const std::string& media_name)
+	FMODWrapperResult Wrapper::Play(int resource_ID, int channel)
 	{
-		if (!IsSystemInitialized()) return;
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
 
-		LoadAudio(media_name, true);
+		result = PlayAudio(resource_ID, channel, false);
+		return result;
 	}
 
-	void Wrapper::Play(int resource_ID, int channel)
+	FMODWrapperResult Wrapper::PlayLoop(int resource_ID, int channel)
 	{
-		if (!IsSystemInitialized()) return;
-		if (m_ResourcesSize == 0) return;
-		PlayAudio(resource_ID, channel, false);
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+		
+		result = PlayAudio(resource_ID, channel, true);
+		return result;
 	}
 
-	void Wrapper::PlayLoop(int resource_ID, int channel)
+	FMODWrapperResult Wrapper::Pause(int resource_ID)
 	{
-		if (!IsSystemInitialized()) return;
-		if (m_ResourcesSize == 0) return;
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
 
-		PlayAudio(resource_ID, channel, true);
-	}
+		FMOD::Channel* ChannelToPause = GetPlayingChannelFromResourceID(result, resource_ID);
+		if (!ChannelToPause || !result.IsValid()) return result;
 
-	void Wrapper::Pause(int resource_ID)
-	{
-		if (m_ResourcesSize == 0) return;
-
-		FMOD::Channel* ChannelToPause = GetPlayingChannelFromResourceID(resource_ID);
-		FMOD_RESULT result = ChannelToPause->setPaused(true);
-
-		if (!CheckOperationResult(result)) {
-			cout << "A problem has been detected while pausing resource  " << resource_ID;
-			cout << " in channel " << ChannelToPause << endl;
-		}
-	}
-
-	void Wrapper::Stop(int resource_ID)
-	{
-		if (m_ResourcesSize == 0) return;
-
-		FMOD::Channel* ChannelToStop = GetPlayingChannelFromResourceID(resource_ID);
-		FMOD_RESULT result = ChannelToStop->stop();
-
-		if (!CheckOperationResult(result))
+		bool IsPlaying = false;
+		result.Update(ChannelToPause->isPlaying(&IsPlaying));
+		if (!IsPlaying)
 		{
-			cout << "A problem has been detected while stopping resource " << resource_ID;
-			cout << " in channel " << ChannelToStop << endl;
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append("Cannot pause a channel that is not playing");
+			return result;
 		}
 
-		m_ResourcesInPlay[resource_ID] = 0;
+		result.Update(ChannelToPause->setPaused(true));
+
+		if (!result.IsValid()) {
+			result.msg.append("A problem has been detected while pausing resource " + std::to_string(resource_ID));			
+		}
+
+		return result;
 	}
 
-	void Wrapper::SetPan(int resource_ID, float pan)
+	FMODWrapperResult Wrapper::Stop(int resource_ID)
 	{
-		if (m_ResourcesSize == 0) return;
-		if (!ValidateResourceId(resource_ID)) return;
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+
+		FMOD::Channel* ChannelToStop = GetPlayingChannelFromResourceID(result, resource_ID);
+		if (!ChannelToStop || !result.IsValid()) return result;
+
+		bool IsPlaying = false;
+		result.Update(ChannelToStop->isPlaying(&IsPlaying));
+		if (!IsPlaying)
+		{
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append("Cannot stop a channel that is not playing");
+			return result;
+		}
+
+		result.Update(ChannelToStop->stop());
+
+		if (!result.IsValid())
+		{
+			result.msg.append("A problem has been detected while stopping resource " + std::to_string(resource_ID));
+		}
+
+		Media& media = m_Resources[resource_ID];
+		media.m_channel_id = INVALID_CHANNEL_ID;
+
+		return result;
+	}
+
+	FMODWrapperResult Wrapper::SetPan(int resource_ID, float pan)
+	{
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+		
+		result = ValidateResourceId(resource_ID);
+		if (!result.IsValid()) return result;
+
 		if (pan < MIN_2D_PAN && pan > MAX_2D_PAN)
 		{
-			cout << "Invalid value for PAN. Please provide a value in the interval [";
-			cout << MIN_2D_PAN;
-			cout << ",";
-			cout << MAX_2D_PAN;
-			cout << "]" << endl;
-			return;
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append(
+				"Invalid value for PAN. Please provide a value in the interval [" 
+				+ std::to_string(MIN_2D_PAN)
+				+ ","
+				+ std::to_string(MAX_2D_PAN)
+				+ "]"
+			);
+			return result;
 		}
-		FMOD::Channel* channel = GetPlayingChannelFromResourceID(resource_ID);
-		FMOD_RESULT result = channel->setPan(pan);
+		
+		FMOD::Channel* channel = GetPlayingChannelFromResourceID(result, resource_ID);
+		if (!channel || !result.IsValid()) return result;
 
-		if (!CheckOperationResult(result))
+		result.Update(channel->setPan(pan));
+
+		if (!result.IsValid())
 		{
-			cout << "A problem has been detected trying to modify PAN value for resource " << resource_ID;
-			cout << " in channel " << channel << endl;
+			result.msg.append("A problem has been detected trying to modify PAN value for resource " + std::to_string(resource_ID));			
 		}
+
+		return result;
 	}
 
-	void Wrapper::SetVolume(int resource_ID, float volume)
+	FMODWrapperResult Wrapper::SetVolume(int resource_ID, float volume)
 	{
-		if (m_ResourcesSize == 0) return;
-		if (!ValidateResourceId(resource_ID)) return;
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+
+		result = ValidateResourceId(resource_ID);
+		if (!result.IsValid()) return result;
+
 		if (volume < MIN_VOLUME && volume > MAX_VOLUME)
 		{
-			cout << "Invalid value for Volume. Please provide a value in the interval [";
-			cout << MIN_VOLUME;
-			cout << ",";
-			cout << MAX_VOLUME;
-			cout << "]" << endl;
-			return;
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append(
+				"Invalid value for Volume. Please provide a value in the interval ["
+				+ std::to_string(MIN_VOLUME)
+				+ ","
+				+ std::to_string(MAX_VOLUME)
+				+ "]"
+			);
+			return result;			
 		}
-		FMOD::Channel* channel = GetPlayingChannelFromResourceID(resource_ID);
+
+		FMOD::Channel* channel = GetPlayingChannelFromResourceID(result, resource_ID);
+		if (!channel || !result.IsValid()) return result;
+
 		float normalizedVolume = volume / MAX_VOLUME;
-		FMOD_RESULT result = channel->setVolume(normalizedVolume);
+		result.Update(channel->setVolume(normalizedVolume));
 
-		if (!CheckOperationResult(result))
+		if (!result.IsValid())
 		{
-			cout << "A problem has been detected trying to modify volume to " << volume << " for resource  " << resource_ID;
-			cout << " in channel " << channel << endl;
+			result.msg.append("A problem has been detected trying to modify volume to " 
+				+ std::to_string(volume) 
+				+ " for resource " 
+				+ std::to_string(resource_ID));
 		}
+
+		return result;
 	}
 
-	void Wrapper::Close()
+	FMODWrapperResult Wrapper::Close()
 	{
-		FMOD_RESULT result;
-		result = m_FMOD_Instance->release();
+		FMODWrapperResult result = FMODWrapperResult::From(m_FMOD_Instance->release());
 
-		if (!CheckOperationResult(result))
+		if (!result.IsValid())
 		{
-			cout << "An error has been detected releasing FMOD instance E: " << result << endl;
+			result.msg.append("An error has been detected releasing FMOD instance");		
 		}
+		return result;
 	}
 
-	int Wrapper::LoadAudio(const std::string& media_name, bool stream)
+	FMODWrapperResult Wrapper::LoadAudio(const std::string& media_name, bool stream)
 	{
-		if (!IsSystemInitialized()) return WRAPPER_INVALID_RESOURCE_ID;
-
 		FMOD::Sound* sound;
 		std::string absolute_file_path = m_absolute_resources_path + media_name;
-		FMOD_RESULT result = m_FMOD_Instance->createSound(absolute_file_path.c_str(), stream == true ? FMOD_CREATESTREAM : FMOD_2D, 0, &sound);
-		
-		if (!CheckOperationResult(result)) return WRAPPER_INVALID_RESOURCE_ID;
-		
-		m_ResourcesNames[m_ResourcesSize] = media_name;
+		FMODWrapperResult result = FMODWrapperResult::From(m_FMOD_Instance->createSound(absolute_file_path.c_str(), stream == true ? FMOD_CREATESTREAM : FMOD_2D, 0, &sound));
 
-		return AddResource(sound);
+		if (!result.IsValid()) return result;
+
+		AddResource(media_name, sound);
+
+		return result;
 	}
 
-	void Wrapper::PlayAudio(int resource_ID, int channel, bool loop)
+	FMODWrapperResult Wrapper::PlayAudio(int resource_ID, int channel, bool loop)
 	{
-		if (!IsSystemInitialized()) return;
-		if (!ValidateResourceId(resource_ID)) return;
+		FMODWrapperResult result = ValidateResourceId(resource_ID);
 		if (channel <= 0 || channel > m_channel_total)
 		{
-			cout << "Invalid channel received in input. Please provide a valid channel" << endl;
-			return;
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append("Invalid channel received in input. Please provide a valid channel");			
+			return result;
 		}
 
-		FMOD::Sound* sound;
-		FMOD::Channel* ch;
+		Media& media = m_Resources[resource_ID];
+		result.Update(media.m_sound->setMode(loop == true ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF));
+		if (!result.IsValid()) return result;
+		
+		FMOD::Channel* ch = m_Channels[channel - 1];
+		bool isPlaying;
+		ch->isPlaying(&isPlaying);
 
-		FMOD_RESULT result;
-
-		sound = m_Resources[resource_ID];
-		sound->setMode(loop == true ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF);
-
-		ch = m_Channels[channel - 1];
-		int play_channel = m_ResourcesInPlay[resource_ID];
-
-		if (play_channel > 0)
+		bool IsMediaAssignedToAChannel = media.m_channel_id != INVALID_CHANNEL_ID;
+		if (isPlaying && IsMediaAssignedToAChannel && media.m_channel_id != (channel - 1))
 		{
-			bool playing;
-			result = ch->isPlaying(&playing);
-			ch->setPaused(false);
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append("Channel is already assigned to another media. Please select another channel");
+			return result;
+		}
 
-			CheckOperationResult(result);
+		if (IsMediaAssignedToAChannel)
+		{
+			bool IsMediaAssignedToThisChannel = media.m_channel_id == (channel - 1);
+			if (IsMediaAssignedToThisChannel)
+			{
+				//remove pause if paused
+				result.Update(ch->setPaused(false));
+			}
+			else
+			{
+				result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+				result.msg.append("This media is already playing in channel " + std::to_string(media.m_channel_id));
+			}
 		}
 		else
 		{
-			result = m_FMOD_Instance->playSound(sound, 0, false, &ch);
+			result.Update(m_FMOD_Instance->playSound(media.m_sound, 0, false, &ch));
 
-			if (!CheckOperationResult(result)) return;
+			if (!result.IsValid())
+			{
+				result.msg.append("An error occurred while trying to play media "
+					+ media.m_mediaName
+					+ " in channel "
+					+ std::to_string(channel)
+				);
+			}
 
 			m_Channels[channel - 1] = ch;
-			m_ResourcesInPlay[resource_ID] = channel - 1;
+			media.m_channel_id = channel - 1;
 		}
+
+		return result;
 	}
 
-	int Wrapper::AddResource(FMOD::Sound* sound)
+	void Wrapper::AddResource(const std::string& media_name, FMOD::Sound* sound)
 	{
-		if (!IsSystemInitialized()) return WRAPPER_INVALID_RESOURCE_ID;
-		
-		m_Resources[m_ResourcesSize] = sound;
+		Media NewMediaResource(media_name, sound);
+		m_Resources.insert(std::pair<int, Media>(m_ResourcesSize, NewMediaResource));
 		m_ResourcesSize++;
-		
-		return m_ResourcesSize;
 	}
 
-	FMOD::Channel* Wrapper::GetPlayingChannelFromResourceID(const int resource_id)
+	FMOD::Channel* Wrapper::GetPlayingChannelFromResourceID(FMODWrapperResult& result, const int resource_id)
 	{
-		FMOD::Sound* sound;
-		int channel_Id;
+		Media& media = m_Resources[resource_id];
+		result.code = media.m_channel_id == INVALID_CHANNEL_ID
+			? FMODWrapperResult::FMODWrapperResultCode::ERROR
+			: FMODWrapperResult::FMODWrapperResultCode::OK;
 
-		sound = m_Resources[resource_id];
-		channel_Id = m_ResourcesInPlay[resource_id];
-		return m_Channels[channel_Id];
+		if (!result.IsValid())
+		{
+			result.msg.append("There is not channel associated to this resource");
+			return nullptr;
+		}
+
+		return m_Channels[media.m_channel_id];
 	}
 
-	bool Wrapper::ValidateResourceId(const int resource_id) const
+	FMODWrapperResult Wrapper::ValidateResourceId(const int resource_id) const
 	{
 		bool IsValid = resource_id != WRAPPER_INVALID_RESOURCE_ID && resource_id >= 0 && resource_id < m_ResourcesSize;
-		if(!IsValid) 
-			cout << "Invalid Resource ID received in input. Please provide a valid id" << endl;
-		return IsValid;
+		FMODWrapperResult result;
+		result.code = IsValid
+			? FMODWrapperResult::FMODWrapperResultCode::OK
+			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
+		
+		if (!result.IsValid())
+		{
+			result.msg.append("Invalid Resource ID received in input. Please provide a valid id");
+		}
+		
+		return result;
 	}
 
+	FMODWrapperResult Wrapper::ValidateResourceOperation() const
+	{
+		bool IsValid = m_ResourcesSize > 0;
+		FMODWrapperResult result;
+		result.code = IsValid
+			? FMODWrapperResult::FMODWrapperResultCode::OK
+			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
+		if (!result.IsValid())
+		{
+			result.msg.append("Invalid resource operation. To execute this operation you need to load at least a resource");
+		}
+		return result;
+	}
 }

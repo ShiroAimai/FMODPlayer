@@ -68,7 +68,11 @@ void Load()
 	string new_media_file_name;
 	getline(cin, new_media_file_name);
 	
-	wrapper->Load(new_media_file_name);
+	FMODWrapperResult result = wrapper->Load(new_media_file_name);
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
 }
 
 void LoadStreaming()
@@ -79,7 +83,11 @@ void LoadStreaming()
 	string new_media_file_name;
 	getline(cin, new_media_file_name);
 
-	wrapper->LoadStreaming(new_media_file_name);
+	FMODWrapperResult result = wrapper->LoadStreaming(new_media_file_name);
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
 }
 
 void Play(bool ShouldLoop)
@@ -98,7 +106,6 @@ void Play(bool ShouldLoop)
 
 		cout << "Channel [1-" << wrapper->GetTotalNumberOfChannels() << "]: ";
 
-
 		string new_channels;
 		getline(cin, new_channels);
 		int channel = -1;
@@ -107,13 +114,19 @@ void Play(bool ShouldLoop)
 			channel = atoi(new_channels.c_str());
 		}
 
+		FMODWrapperResult result;
 		if (ShouldLoop)
 		{
-			wrapper->PlayLoop(resource_id, channel);
+			result = wrapper->PlayLoop(resource_id, channel);
 		}
 		else
 		{
-			wrapper->Play(resource_id, channel);
+			result = wrapper->Play(resource_id, channel);
+		}
+		
+		if (!result.IsValid())
+		{
+			error = result.msg;
 		}
 	}
 	else 
@@ -121,8 +134,6 @@ void Play(bool ShouldLoop)
 		error = "There's no media loaded. Load a media before using this option";
 	}
 }
-
-
 
 void Pause()
 {
@@ -140,8 +151,12 @@ void Pause()
 		}
 		
 		if(resource_id >= 0)
-		{
-			wrapper->Pause(resource_id);
+		{			
+			FMODWrapperResult result = wrapper->Pause(resource_id);
+			if (!result.IsValid())
+			{
+				error = result.msg;
+			}
 		}
 		else {
 			error = "Invalid resource id. Please provide a valid resource id";
@@ -170,7 +185,11 @@ void Stop()
 		
 		if (resource_id >= 0)
 		{
-			wrapper->Stop(resource_id);
+			FMODWrapperResult result = wrapper->Stop(resource_id);
+			if (!result.IsValid())
+			{
+				error = result.msg;
+			}
 		}
 		else
 		{
@@ -210,7 +229,11 @@ void SetPan()
 			pan = atof(new_pan.c_str());
 		}
 
-		wrapper->SetPan(resource_id, pan);
+		FMODWrapperResult result = wrapper->SetPan(resource_id, pan);
+		if (!result.IsValid())
+		{
+			error = result.msg;
+		}
 	}
 	else 
 	{
@@ -244,7 +267,11 @@ void SetVolume()
 			volume = atof(new_volume.c_str());
 		}
 
-		wrapper->SetVolume(resource_id, volume);
+		FMODWrapperResult result = wrapper->SetVolume(resource_id, volume);
+		if (!result.IsValid())
+		{
+			error = result.msg;
+		}
 	}
 	else
 	{
@@ -291,7 +318,13 @@ bool InitWrapper()
 		total_channels = atoi(new_max_channels.c_str());
 	}
 
-	wrapper = Wrapper::Init(absoulute_resources_path, total_channels);
+	FMODWrapperResult InitResult;
+	wrapper = Wrapper::Init(InitResult, absoulute_resources_path, total_channels);
+
+	if (!InitResult.IsValid())
+	{
+		error = InitResult.msg;
+	}
 
 	if(wrapper)
 	{
@@ -352,7 +385,7 @@ void EvaluateCommand(const char& Command) {
 		break;
 	}
 	default: {
-		cout << "Invalid command" << "Code: " << (int)Command << endl;
+		error = "Invalid command. Please select a valid command";
 		break;
 	}
 	}
