@@ -38,10 +38,14 @@ namespace NCWrapper {
 	FMODWrapperResult Wrapper::Init(Wrapper** OutWrapperInstance, std::string& absolute_resources_path, int channels)
 	{
 		FMODWrapperResult result;
-		if (channels > MAX_CHANNELS)
+		if (channels < MIN_CHANNELS || channels > MAX_CHANNELS)
 		{
 			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
-			result.msg.append("Invalid desired Channel. Insert a number between 1 and " + std::to_string(MAX_CHANNELS));
+			result.msg.append("Invalid desired Channel. Insert a number in the interval [" 
+				+ std::to_string(MIN_CHANNELS)
+				+ "," 
+				+ std::to_string(MAX_CHANNELS)
+				+ "]");
 			return result;
 		}
 
@@ -57,6 +61,7 @@ namespace NCWrapper {
 	float Wrapper::MIN_VOLUME = 0.f;
 	float Wrapper::MAX_2D_PAN = 1.f; //rightmost
 	float Wrapper::MIN_2D_PAN = -1.f; //leftmost
+	int Wrapper::MIN_CHANNELS = 1;
 	int Wrapper::MAX_CHANNELS = 12;
 
 	int Wrapper::GetTotalNumberOfChannels() const

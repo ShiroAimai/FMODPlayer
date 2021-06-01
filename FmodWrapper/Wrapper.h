@@ -31,6 +31,7 @@ namespace NCWrapper {
 		static float MIN_VOLUME;
 		static float MAX_2D_PAN;
 		static float MIN_2D_PAN;
+		static int MIN_CHANNELS;
 		static int MAX_CHANNELS;
 
 		static FMODWrapperResult Init(Wrapper** OutWrapperInstance, std::string& absolute_resources_path, int channels);

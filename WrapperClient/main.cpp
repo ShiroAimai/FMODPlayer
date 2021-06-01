@@ -318,7 +318,7 @@ bool InitWrapper()
 	
 	int total_channels = NCWrapper::Wrapper::MAX_CHANNELS;
 
-	cout << "How many channels ? [ MAX " << total_channels << "]: ";
+	cout << "How many channels ? [" << NCWrapper::Wrapper::MIN_CHANNELS << "," << NCWrapper::Wrapper::MAX_CHANNELS << "]: ";
 	string new_max_channels;
 	getline(cin, new_max_channels);
 
