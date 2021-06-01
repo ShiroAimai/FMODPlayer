@@ -37,10 +37,20 @@ namespace NCWrapper {
 
 	FMODWrapperResult Wrapper::Init(Wrapper** OutWrapperInstance, std::string& absolute_resources_path, int channels)
 	{
+		FMODWrapperResult result;
+		if (channels > MAX_CHANNELS)
+		{
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append("Invalid desired Channel. Insert a number between 1 and " + std::to_string(MAX_CHANNELS));
+			return result;
+		}
+
 		Wrapper* SystemInitialized = new Wrapper();
 		*OutWrapperInstance = SystemInitialized;
 
-		return SystemInitialized->InitFMODSystem(absolute_resources_path, channels);
+		result = SystemInitialized->InitFMODSystem(absolute_resources_path, channels);
+		
+		return result;
 	}
 
 	float Wrapper::MAX_VOLUME = 100.f;
@@ -59,6 +69,12 @@ namespace NCWrapper {
 		return m_Resources.size();
 	}
 
+	void Wrapper::GetLoadedMediaNames(std::vector <std::string>& loaded_media_names)
+	{
+		for (auto media : m_Resources)
+			loaded_media_names.push_back(media.m_mediaName);
+	}
+
 	Wrapper::Wrapper() : m_FMOD_Instance(nullptr)
 	{
 		//make constructor private in order to force call to factory method
@@ -66,7 +82,8 @@ namespace NCWrapper {
 
 	FMODWrapperResult Wrapper::InitFMODSystem(const std::string& absolute_resources_path, int channels)
 	{
-		FMODWrapperResult result;
+		FMODWrapperResult result;	
+
 		result.Update(FMOD::System_Create(&m_FMOD_Instance));
 
 		if(!result.IsValid())
@@ -82,7 +99,7 @@ namespace NCWrapper {
 			result.msg.append("FMOD Instance initialization failed with error");
 			return result;
 		}
-
+		
 		m_Channels.resize(channels);
 
 		m_absolute_resources_path = absolute_resources_path;
@@ -330,7 +347,7 @@ namespace NCWrapper {
 		return result;
 	}
 
-	NCWrapper::FMODWrapperResult Wrapper::ValidateChannel(const int channel) const
+	FMODWrapperResult Wrapper::ValidateChannel(const int channel) const
 	{		
 		bool IsValid = channel >= 0 && channel < m_Channels.size();
 

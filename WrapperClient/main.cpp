@@ -49,6 +49,18 @@ void ShowOptions() {
 	cout << "2) Load Stream" << endl;
 	cout << "3) Play" << endl;
 	cout << "4) Play loop" << endl;
+	
+	std::vector<string> loadedMediaNames;
+	wrapper->GetLoadedMediaNames(loadedMediaNames);
+	if(loadedMediaNames.size() > 0)
+	{
+		cout << "=============" << endl;
+		cout << "Available Media:" << endl;
+		cout << "ID" << " " << "Name" <<  endl;
+		for(int i = 0; i < loadedMediaNames.size(); ++i)
+			cout << i << " " << loadedMediaNames[i] << endl;
+	}
+	
 	cout << "=============" << endl;
 	cout << "Channel:" << endl;
 	cout << "5) Pause" << endl;
@@ -94,7 +106,7 @@ void LoadStreaming()
 void Play(bool ShouldLoop)
 {
 	if (wrapper->GetNumberOfAvailableResourcesToPlay() > 0) {
-		cout << "Resource ID: ";
+		cout << "Media ID: ";
 		cin.ignore();
 
 		string new_resource_id;
@@ -105,7 +117,7 @@ void Play(bool ShouldLoop)
 			resource_id = atoi(new_resource_id.c_str());
 		}
 
-		cout << "Channel [1-" << wrapper->GetTotalNumberOfChannels() << "]: ";
+		cout << "Channel [0-" << wrapper->GetTotalNumberOfChannels() << "]: ";
 
 		string new_channels;
 		getline(cin, new_channels);
@@ -140,7 +152,7 @@ void Pause()
 {
 	if (wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
 	{
-		cout << "Resource ID: ";
+		cout << "Channel: ";
 		cin.ignore();
 
 		string new_resource_id;
@@ -173,7 +185,7 @@ void Stop()
 {
 	if (wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
 	{
-		cout << "Resource ID: ";
+		cout << "Channel: ";
 		cin.ignore();
 
 		string new_resource_id;
@@ -207,7 +219,7 @@ void SetPan()
 {
 	if (wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
 	{
-		cout << "Resource ID: ";
+		cout << "Channel: ";
 		cin.ignore();
 
 		string inserted_resource_id;
@@ -242,12 +254,11 @@ void SetPan()
 	}
 }
 
-
 void SetVolume()
 {
 	if(wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
 	{
-		cout << "Resource ID: ";
+		cout << "Channel: ";
 		cin.ignore();
 		string inserted_resource_id;
 		getline(cin, inserted_resource_id);
@@ -282,6 +293,7 @@ void SetVolume()
 
 bool InitWrapper() 
 {
+	ClearConsole();
 	char c_absolute_path[PATH_MAX_LENGTH];
 
 	GetCurrentDir(c_absolute_path, PATH_MAX_LENGTH);
@@ -304,14 +316,9 @@ bool InitWrapper()
 		absoulute_resources_path = new_absolute_path;
 	}
 	
-	int total_channels = 0;
+	int total_channels = NCWrapper::Wrapper::MAX_CHANNELS;
 
-	if (total_channels == 0)
-	{
-		total_channels = 8;
-	}
-
-	cout << "How many channels ? [" << total_channels << "]: ";
+	cout << "How many channels ? [ MAX " << total_channels << "]: ";
 	string new_max_channels;
 	getline(cin, new_max_channels);
 
@@ -395,9 +402,11 @@ int main() {
 	cout << "Initializing NC FMOD wrapper..." << endl;
 	cout << endl;
 
-	InitWrapper();
+	while (!g_system_initialized) {
+		InitWrapper();
+	}
 
-	while (g_system_initialized && !g_execution_finished)
+	while (!g_execution_finished)
 	{
 		ShowOptions();
 		char command;
