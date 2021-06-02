@@ -27,14 +27,22 @@ public:
 	void Release();
 
 private:
+	//MEDIA OPERATIONS
 	void LoadMedia();
 	void LoadMediaStreaming();
 	void Play(bool ShouldLoop);
+	//SINGLE CHANNEL OPERATIONS
+	void UpdateMute();
 	void UpdatePause();
 	void Stop();
 	void SetPan();
 	void SetVolume();
-	
+	//MULTI CHANNEL OPERATIONS
+	void UpdateVolumeForAllChannels();
+	void UpdateMuteForAllChannels();
+	void UpdatePauseForAllChannels();
+	void StopAllChannels();
+
 	//Evaluate Input
 	void EvaluateInput(const std::string& Command);
 	void ResetAppState();
@@ -49,6 +57,7 @@ private:
 	void ShowMedia() const;
 	void ShowChannelOptions() const;
 	void ShowChannelsState() const;
+	void ShowMasterGroupState() const;
 	void ShowChannelsId() const;
 	void ShowCommons() const;
 };

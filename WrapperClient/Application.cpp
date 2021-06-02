@@ -1,7 +1,8 @@
 #include "pch.h"
+#include <algorithm>
 #include "FMODWrapperResult.h"
 #include "ChannelState.h"
-#include <algorithm>
+#include "MasterGroupState.h"
 #include "Application.h"
 
 #define PATH_MAX_LENGTH 255
@@ -90,7 +91,7 @@ bool Application::Init()
 
 void Application::Update()
 {
-	if(_kbhit()) 
+	if (_kbhit())
 	{
 		int key = _getch();
 		if (key == QuitKey)
@@ -100,7 +101,7 @@ void Application::Update()
 		}
 		m_state = key == InsertCommandKey ? State::INSERT_COMMAND : State::SHOW;
 	}
-	
+
 	Render();
 }
 
@@ -111,7 +112,7 @@ bool Application::IsTerminated() const
 
 void Application::Release()
 {
-	m_wrapper->Close();	
+	m_wrapper->Close();
 }
 
 void Application::LoadMedia()
@@ -175,6 +176,32 @@ void Application::Play(bool ShouldLoop)
 			result = m_wrapper->Play(resource_id, channel);
 		}
 
+		if (!result.IsValid())
+		{
+			error = result.msg;
+		}
+	}
+	else
+	{
+		error = "There's no media loaded. Load a media before using this option";
+	}
+}
+
+void Application::UpdateMute()
+{
+	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	{
+		cout << "Channel ID: ";
+
+		string inserted_channel_id;
+		getline(cin, inserted_channel_id);
+		int channel_id = -1;
+
+		if (!inserted_channel_id.empty()) {
+			channel_id = atoi(inserted_channel_id.c_str());
+		}
+
+		FMODWrapperResult result = m_wrapper->UpdateMute(channel_id);
 		if (!result.IsValid())
 		{
 			error = result.msg;
@@ -311,8 +338,62 @@ void Application::SetVolume()
 	}
 }
 
+void Application::UpdateVolumeForAllChannels()
+{
+	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	{
+		cout << "Volume [";
+		cout << NCWrapper::Wrapper::MIN_VOLUME << ",";
+		cout << NCWrapper::Wrapper::MAX_VOLUME << "]: ";
+
+		string new_volume;
+		getline(cin, new_volume);
+		float volume = 0;
+		if (!new_volume.empty()) {
+			volume = atof(new_volume.c_str());
+		}
+
+		FMODWrapperResult result = m_wrapper->SetVolumeForAllChannels(volume);
+		if (!result.IsValid())
+		{
+			error = result.msg;
+		}
+	}
+	else
+	{
+		error = "There's no media loaded. Load a media before using this option";
+	}
+}
+
+void Application::UpdateMuteForAllChannels()
+{
+	FMODWrapperResult result = m_wrapper->UpdateMuteForAllChannels();
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
+}
+
+void Application::UpdatePauseForAllChannels()
+{
+	FMODWrapperResult result = m_wrapper->UpdatePauseForAllChannels();
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
+}
+
+void Application::StopAllChannels()
+{
+	FMODWrapperResult result = m_wrapper->StopAllChannels();
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
+}
+
 void Application::EvaluateInput(const string& Command)
-{	
+{
 	int CommandKey = is_number(Command) ? stoi(Command) : -1;
 	switch (CommandKey) {
 	case 1: {
@@ -332,19 +413,39 @@ void Application::EvaluateInput(const string& Command)
 		break;
 	}
 	case 5: {
-		UpdatePause();
+		UpdateMute();
 		break;
 	}
 	case 6: {
-		Stop();
+		UpdatePause();
 		break;
 	}
 	case 7: {
-		SetPan();
+		Stop();
 		break;
 	}
 	case 8: {
+		SetPan();
+		break;
+	}
+	case 9: {
 		SetVolume();
+		break;
+	}
+	case 10: {
+		UpdateVolumeForAllChannels();
+		break;
+	}
+	case 11: {
+		UpdateMuteForAllChannels();
+		break;
+	}
+	case 12: {
+		UpdatePauseForAllChannels();
+		break;
+	}
+	case 13: {
+		StopAllChannels();
 		break;
 	}
 	default: {
@@ -390,6 +491,8 @@ void Application::ShowUpdates()
 	ShowMedia();
 	cout << endl;
 	cout << CONSOLE_DIVIDER << endl;
+	ShowMasterGroupState();
+	cout << endl;
 	ShowChannelsState();
 	cout << endl;
 	cout << CONSOLE_DIVIDER << endl;
@@ -434,6 +537,7 @@ void Application::ShowMediaOptions() const
 	cout << "[2] Load Stream" << endl;
 	cout << "[3] Play" << endl;
 	cout << "[5] Play loop" << endl;
+	cout << endl;
 }
 
 void Application::ShowMedia() const
@@ -452,10 +556,18 @@ void Application::ShowMedia() const
 void Application::ShowChannelOptions() const
 {
 	cout << "Channel Options:" << endl;
-	cout << "[5] Pause/Restart" << endl;
-	cout << "[6] Stop" << endl;
-	cout << "[7] Pan" << endl;
-	cout << "[8] Volume" << endl;
+	cout << "[5] Mute/Unmute" << endl;
+	cout << "[6] Pause/Restart" << endl;
+	cout << "[7] Stop" << endl;
+	cout << "[8] Pan" << endl;
+	cout << "[9] Volume" << endl;
+	cout << endl;
+	cout << "Multi Channel Options:" << endl;
+	cout << "[10] Volume All" << endl;
+	cout << "[11] Mute/Unmute All" << endl;
+	cout << "[12] Pause/Restart All" << endl;
+	cout << "[13] Stop All" << endl;
+	cout << endl;
 }
 
 void Application::ShowChannelsState() const
@@ -466,7 +578,7 @@ void Application::ShowChannelsState() const
 	{
 		cout << "Channels State:" << endl;
 		cout << "ID" << " | " << "Media ID" << " | " << " Time" << " | ";
-		cout << "Pan" << " | " << "Volume" << " | ";
+		cout << "Pan" << " | " << "Volume" << " | " << " Muted " << " | ";
 		cout << "State" << endl;
 
 		for (const ChannelState& channelState : availableChannelsState)
@@ -474,9 +586,21 @@ void Application::ShowChannelsState() const
 			cout << channelState.channelId << " | " << channelState.mediaId << " | ";
 			cout << channelState.mediaCurrentTime << "/" << channelState.mediaTotalTime << " | ";
 			cout << channelState.pan << " | " << channelState.volume << " | ";
-			cout << ChannelState::to_string(channelState.playingState) << endl;
+			cout << (channelState.isMuted ? "true" : "false") << " | " << ChannelState::to_string(channelState.playingState) << endl;
 		}
 	}
+}
+
+void Application::ShowMasterGroupState() const
+{
+	MasterGroupState state;
+	m_wrapper->GetMasterGroupState(state);
+	
+	cout << "Master Group State:" << endl;
+	cout << "Volume" << " | " << "Muted" << " | " << "Paused" << endl;
+	cout << state.volume << " | ";
+	cout << (state.isMuted ? "true" : "false") << " | ";
+	cout << (state.isPaused ? "true" : "false") << endl;
 }
 
 void Application::ShowChannelsId() const
@@ -491,7 +615,7 @@ void Application::ShowChannelsId() const
 			cout << availableChannelsState[i].channelId;
 			if (i == (availableChannelsState.size() - 1))
 				cout << "]" << endl;
-			else 
+			else
 				cout << ",";
 		}
 	}

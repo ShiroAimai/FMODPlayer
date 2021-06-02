@@ -8,6 +8,7 @@
 namespace NCWrapper {
 	struct FMODWrapperResult;
 	struct ChannelState;
+	struct MasterGroupState;
 
 	class Wrapper
 	{
@@ -43,19 +44,25 @@ namespace NCWrapper {
 		int GetNumberOfAvailableResourcesToPlay() const;
 		void GetLoadedMediaNames(std::vector <std::string>& OutLoadedMediaNames) const;;
 		void GetAllChannelsState(std::vector<ChannelState>& channelsState) const;
-		
+		void GetMasterGroupState(MasterGroupState& state) const;
 		~Wrapper();
 #pragma region FMOD Wrap
+		//MEDIA OPERATIONS
 		FMODWrapperResult Load(const std::string& media_name);
 		FMODWrapperResult LoadStreaming(const std::string& media_name);
-
 		FMODWrapperResult Play(int resource_ID, int channel_id);
 		FMODWrapperResult PlayLoop(int resource_ID, int channel_id);
+		//SINGLE CHANNEL OPERATIONS
+		FMODWrapperResult UpdateMute(int channel_id);
 		FMODWrapperResult UpdatePause(int channel_id);
 		FMODWrapperResult Stop(int channel_id);
-
 		FMODWrapperResult SetPan(int channel_id, float pan); //from -1 left, 0 center, 1 right
 		FMODWrapperResult SetVolume(int channel_id, float volume); //from 0 to 1
+		//MULTI CHANNEL OPERATIONS
+		FMODWrapperResult UpdateMuteForAllChannels();
+		FMODWrapperResult UpdatePauseForAllChannels();
+		FMODWrapperResult StopAllChannels();
+		FMODWrapperResult SetVolumeForAllChannels(float volume);
 
 		FMODWrapperResult Close();
 #pragma endregion
@@ -67,9 +74,11 @@ namespace NCWrapper {
 		FMODWrapperResult ValidateResourceId(const int resource_id) const;
 		FMODWrapperResult ValidateChannel(const int channel) const;
 		FMODWrapperResult ValidateResourceOperation() const;
+		FMODWrapperResult ValidateVolumeValue(const float value) const;
 
 		FMOD::System* m_FMOD_Instance = nullptr;
-		
+		FMOD::ChannelGroup* m_master = nullptr;
+
 		//// LOADED MEDIA ////
 		std::vector<NCMedia> m_Resources;
 

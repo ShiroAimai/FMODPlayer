@@ -3,6 +3,7 @@
 #include "Wrapper.h"
 #include "FMODWrapperResult.h"
 #include "ChannelState.h"
+#include "MasterGroupState.h"
 
 using std::cout;
 using std::endl;
@@ -120,6 +121,10 @@ namespace NCWrapper {
 			channel.m_channel->getVolume(&volume);
 			_channelState.volume = isPLaying ? volume * 100 : 0; //de-normalize volume			
 
+			bool isMute;
+			channel.m_channel->getMute(&isMute);
+			_channelState.isMuted = isPLaying ? isMute : false;
+
 			if (isPLaying)
 			{
 				bool paused;
@@ -135,6 +140,19 @@ namespace NCWrapper {
 
 			channelsState.push_back(_channelState);
 		}
+	}
+
+	void Wrapper::GetMasterGroupState(MasterGroupState& state) const
+	{
+		bool isMasterPaused, isMasterMuted;
+		m_master->getPaused(&isMasterPaused);
+		m_master->getMute(&isMasterMuted);
+
+		state.isMuted = isMasterMuted;
+		state.isPaused = isMasterPaused;
+		float volume = 0;
+		m_master->getVolume(&volume);
+		state.volume = volume * 100; //de-normalize volume
 	}
 
 	Wrapper::Wrapper() : m_FMOD_Instance(nullptr)
@@ -164,6 +182,13 @@ namespace NCWrapper {
 		if (!result.IsValid())
 		{
 			result.msg.append("FMOD Instance initialization failed with error");
+			return result;
+		}
+
+		result.Update(m_FMOD_Instance->getMasterChannelGroup(&m_master));
+		if (!result.IsValid())
+		{
+			result.msg.append("A problem has been detected trying to get reference to Master Channel Group");
 			return result;
 		}
 
@@ -199,6 +224,35 @@ namespace NCWrapper {
 		if (!result.IsValid()) return result;
 
 		result = PlayAudio(resource_ID, channel, true);
+		return result;
+	}
+
+	FMODWrapperResult Wrapper::UpdateMute(int channel_id)
+	{
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+		result = ValidateChannel(channel_id);
+		if (!result.IsValid()) return result;
+
+		NCChannel& _ch = m_Channels[channel_id];
+
+		bool IsPlaying = false;
+		result.Update(_ch.m_channel->isPlaying(&IsPlaying));
+		if (!IsPlaying)
+		{
+			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
+			result.msg.append("Cannot mute/unmute a channel that is not playing");
+			return result;
+		}
+
+		bool isMuted;
+		_ch.m_channel->getMute(&isMuted);
+		result.Update(_ch.m_channel->setMute(!isMuted));
+
+		if (!result.IsValid()) {
+			result.msg.append("A problem has been detected while muting/unmuting channel " + std::to_string(channel_id));
+		}
+
 		return result;
 	}
 
@@ -298,19 +352,8 @@ namespace NCWrapper {
 	{
 		FMODWrapperResult result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
-
-		if (volume < MIN_VOLUME && volume > MAX_VOLUME)
-		{
-			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
-			result.msg.append(
-				"Invalid value for Volume. Please provide a value in the interval ["
-				+ std::to_string(MIN_VOLUME)
-				+ ","
-				+ std::to_string(MAX_VOLUME)
-				+ "]"
-			);
-			return result;
-		}
+		result = ValidateVolumeValue(volume);
+		if (!result.IsValid()) return result;
 
 		NCChannel& ChannelToModify = m_Channels[channel];
 		if (!ChannelToModify.m_channel || !result.IsValid()) return result;
@@ -329,6 +372,56 @@ namespace NCWrapper {
 		return result;
 	}
 
+	FMODWrapperResult Wrapper::UpdateMuteForAllChannels()
+	{
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+
+		bool muted;
+		result.Update(m_master->getMute(&muted));
+		result.Update(m_master->setMute(!muted));
+
+		return result;
+	}
+
+	FMODWrapperResult Wrapper::UpdatePauseForAllChannels()
+	{
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+
+		bool paused;
+		result.Update(m_master->getPaused(&paused));
+		result.Update(m_master->setPaused(!paused));
+		
+		return result;
+	}
+
+	FMODWrapperResult Wrapper::StopAllChannels()
+	{
+		FMODWrapperResult result = ValidateResourceOperation();
+		if (!result.IsValid()) return result;
+		result.Update(m_master->stop());
+		return result;
+	}
+
+	FMODWrapperResult Wrapper::SetVolumeForAllChannels(float volume)
+	{
+		FMODWrapperResult result = ValidateVolumeValue(volume);
+		if (!result.IsValid()) return result;
+
+		float normalizedVolume = volume / MAX_VOLUME;
+		result.Update(m_master->setVolume(normalizedVolume));
+
+		if (!result.IsValid())
+		{
+			result.msg.append("A problem has been detected trying to modify volume to "
+				+ std::to_string(volume)
+				+ " for Master Group Channel");
+		}
+
+		return result;
+	}
+
 	FMODWrapperResult Wrapper::Close()
 	{
 		FMODWrapperResult result;
@@ -339,6 +432,12 @@ namespace NCWrapper {
 		if (!result.IsValid())
 		{
 			result.msg.append("An error has been detected releasing FMOD instance");
+		}
+
+		result.Update(m_master->release());
+		if (!result.IsValid())
+		{
+			result.msg.append("An error has been detected releasing FMOD Master Channel Group");
 		}
 
 		return result;
@@ -445,4 +544,26 @@ namespace NCWrapper {
 		}
 		return result;
 	}
+
+	FMODWrapperResult Wrapper::ValidateVolumeValue(const float value) const
+	{
+		FMODWrapperResult result;
+		result.code = value >= MIN_VOLUME && value <= MAX_VOLUME
+			? FMODWrapperResult::FMODWrapperResultCode::OK
+			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
+		
+		if (!result.IsValid())
+		{
+			result.msg.append(
+				"Invalid value for Volume. Please provide a value in the interval ["
+				+ std::to_string(MIN_VOLUME)
+				+ ","
+				+ std::to_string(MAX_VOLUME)
+				+ "]"
+			);
+		}
+
+		return result;
+	}
+
 }

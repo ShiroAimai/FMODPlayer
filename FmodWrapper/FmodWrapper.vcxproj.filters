@@ -30,6 +30,9 @@
     <ClInclude Include="ChannelState.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="MasterGroupState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -42,6 +45,9 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="ChannelState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="MasterGroupState.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>

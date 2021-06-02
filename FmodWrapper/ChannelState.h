@@ -15,6 +15,7 @@ namespace NCWrapper {
 		float mediaCurrentTime;
 		float mediaTotalTime;
 		float pan;
+		bool isMuted;
 		float volume;
 
 		ChannelPlayingState playingState;
