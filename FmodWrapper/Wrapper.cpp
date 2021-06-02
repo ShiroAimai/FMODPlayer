@@ -25,7 +25,7 @@ namespace NCWrapper {
 
 #pragma endregion
 #pragma region NCChannel
-	Wrapper::NCChannel::NCChannel() : 
+	Wrapper::NCChannel::NCChannel() :
 		m_bound_media_id(NCMedia::INVALID_MEDIA_ID),
 		m_channel(nullptr),
 		m_channel_pan(0.f)
@@ -50,9 +50,9 @@ namespace NCWrapper {
 		if (channels < MIN_CHANNELS || channels > MAX_CHANNELS)
 		{
 			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
-			result.msg.append("Invalid desired Channel. Insert a number in the interval [" 
+			result.msg.append("Invalid desired Channel. Insert a number in the interval ["
 				+ std::to_string(MIN_CHANNELS)
-				+ "," 
+				+ ","
 				+ std::to_string(MAX_CHANNELS)
 				+ "]");
 			return result;
@@ -62,7 +62,7 @@ namespace NCWrapper {
 		*OutWrapperInstance = SystemInitialized;
 
 		result = SystemInitialized->InitFMODSystem(absolute_resources_path, channels);
-		
+
 		return result;
 	}
 
@@ -96,15 +96,15 @@ namespace NCWrapper {
 			const NCChannel& channel = m_Channels[i];
 			ChannelState _channelState;
 			_channelState.channelId = i;
-			
+
 			bool isPLaying;
 			channel.m_channel->isPlaying(&isPLaying);
 			_channelState.mediaId = isPLaying ? channel.m_bound_media_id : NCMedia::INVALID_MEDIA_ID;
-			
+
 			unsigned int mediaPlayingTime;
 			channel.m_channel->getPosition(&mediaPlayingTime, FMOD_TIMEUNIT_MS);
 			_channelState.mediaCurrentTime = isPLaying ? mediaPlayingTime / 1000 : 0;
-			
+
 			_channelState.mediaTotalTime = 0.f;
 			if (isPLaying)
 			{
@@ -120,7 +120,7 @@ namespace NCWrapper {
 			channel.m_channel->getVolume(&volume);
 			_channelState.volume = isPLaying ? volume * 100 : 0; //de-normalize volume			
 
-			if(isPLaying)
+			if (isPLaying)
 			{
 				bool paused;
 				channel.m_channel->getPaused(&paused);
@@ -128,7 +128,7 @@ namespace NCWrapper {
 					? ChannelState::ChannelPlayingState::PAUSED
 					: ChannelState::ChannelPlayingState::PLAYING;
 			}
-			else 
+			else
 			{
 				_channelState.playingState = ChannelState::ChannelPlayingState::STOPPED;
 			}
@@ -149,11 +149,11 @@ namespace NCWrapper {
 
 	FMODWrapperResult Wrapper::InitFMODSystem(const std::string& absolute_resources_path, int channels)
 	{
-		FMODWrapperResult result;	
+		FMODWrapperResult result;
 
 		result.Update(FMOD::System_Create(&m_FMOD_Instance));
 
-		if(!result.IsValid())
+		if (!result.IsValid())
 		{
 			result.msg.append("FMOD System Creation failed with error");
 			return result;
@@ -166,7 +166,7 @@ namespace NCWrapper {
 			result.msg.append("FMOD Instance initialization failed with error");
 			return result;
 		}
-		
+
 		m_Channels.resize(channels);
 
 		m_absolute_resources_path = absolute_resources_path;
@@ -197,33 +197,35 @@ namespace NCWrapper {
 	{
 		FMODWrapperResult result = ValidateResourceOperation();
 		if (!result.IsValid()) return result;
-		
+
 		result = PlayAudio(resource_ID, channel, true);
 		return result;
 	}
 
-	FMODWrapperResult Wrapper::Pause(int channel)
+	FMODWrapperResult Wrapper::UpdatePause(int channel)
 	{
 		FMODWrapperResult result = ValidateResourceOperation();
 		if (!result.IsValid()) return result;
 		result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
-		NCChannel& ChannelToPause = m_Channels[channel];
+		NCChannel& _ch = m_Channels[channel];
 
 		bool IsPlaying = false;
-		result.Update(ChannelToPause.m_channel->isPlaying(&IsPlaying));
+		result.Update(_ch.m_channel->isPlaying(&IsPlaying));
 		if (!IsPlaying)
 		{
 			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
-			result.msg.append("Cannot pause a channel that is not playing");
+			result.msg.append("Cannot pause/restart a channel that is not playing");
 			return result;
 		}
-
-		result.Update(ChannelToPause.m_channel->setPaused(true));
+		
+		bool isPaused;
+		_ch.m_channel->getPaused(&isPaused);
+		result.Update(_ch.m_channel->setPaused(!isPaused));
 
 		if (!result.IsValid()) {
-			result.msg.append("A problem has been detected while pausing channel " + std::to_string(channel));			
+			result.msg.append("A problem has been detected while pausing/restarting channel " + std::to_string(channel));
 		}
 
 		return result;
@@ -260,7 +262,7 @@ namespace NCWrapper {
 	}
 
 	FMODWrapperResult Wrapper::SetPan(int channel, float pan)
-	{		
+	{
 		FMODWrapperResult result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
@@ -268,7 +270,7 @@ namespace NCWrapper {
 		{
 			result.code = FMODWrapperResult::FMODWrapperResultCode::ERROR;
 			result.msg.append(
-				"Invalid value for PAN. Please provide a value in the interval [" 
+				"Invalid value for PAN. Please provide a value in the interval ["
 				+ std::to_string(MIN_2D_PAN)
 				+ ","
 				+ std::to_string(MAX_2D_PAN)
@@ -276,7 +278,7 @@ namespace NCWrapper {
 			);
 			return result;
 		}
-		
+
 		NCChannel& ChannelToModify = m_Channels[channel];
 		if (!ChannelToModify.m_channel || !result.IsValid()) return result;
 
@@ -284,7 +286,7 @@ namespace NCWrapper {
 
 		if (!result.IsValid())
 		{
-			result.msg.append("A problem has been detected trying to modify PAN value for channel " + std::to_string(channel));			
+			result.msg.append("A problem has been detected trying to modify PAN value for channel " + std::to_string(channel));
 		}
 
 		ChannelToModify.m_channel_pan = pan; //now we can safely set the pan
@@ -293,7 +295,7 @@ namespace NCWrapper {
 	}
 
 	FMODWrapperResult Wrapper::SetVolume(int channel, float volume)
-	{	
+	{
 		FMODWrapperResult result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
@@ -307,7 +309,7 @@ namespace NCWrapper {
 				+ std::to_string(MAX_VOLUME)
 				+ "]"
 			);
-			return result;			
+			return result;
 		}
 
 		NCChannel& ChannelToModify = m_Channels[channel];
@@ -318,9 +320,9 @@ namespace NCWrapper {
 
 		if (!result.IsValid())
 		{
-			result.msg.append("A problem has been detected trying to modify volume to " 
-				+ std::to_string(volume) 
-				+ " for channel " 
+			result.msg.append("A problem has been detected trying to modify volume to "
+				+ std::to_string(volume)
+				+ " for channel "
 				+ std::to_string(channel));
 		}
 
@@ -331,14 +333,14 @@ namespace NCWrapper {
 	{
 		FMODWrapperResult result;
 		if (!m_FMOD_Instance) return result;
-		
+
 		result = FMODWrapperResult::From(m_FMOD_Instance->release());
 		m_FMOD_Instance = nullptr;
 		if (!result.IsValid())
 		{
 			result.msg.append("An error has been detected releasing FMOD instance");
 		}
-	
+
 		return result;
 	}
 
@@ -361,7 +363,7 @@ namespace NCWrapper {
 		if (!result.IsValid()) return result;
 
 		result = ValidateChannel(channel);
-		if (!result.IsValid()) return result;		
+		if (!result.IsValid()) return result;
 
 		NCMedia& media = m_Resources[resource_ID];
 
@@ -371,36 +373,28 @@ namespace NCWrapper {
 		NCChannel& ch = m_Channels[channel];
 		bool isPlaying;
 		ch.m_channel->isPlaying(&isPlaying);
-		bool IsMediaAssignedToThisChannel = ch.m_bound_media_id == resource_ID;
 
-		if (isPlaying && IsMediaAssignedToThisChannel)
+		if (isPlaying)
 		{
-			//remove pause if paused
-			result.Update(ch.m_channel->setPaused(false));
+			result.Update(ch.m_channel->stop());
 		}
-		else
+
+		if (!result.IsValid()) return result;
+
+		result.Update(m_FMOD_Instance->playSound(media.m_sound.get(), 0, false, &ch.m_channel));
+
+		if (!result.IsValid())
 		{
-			if (isPlaying && !IsMediaAssignedToThisChannel)
-			{
-				result.Update(ch.m_channel->stop());
-			}
-
-			if (!result.IsValid()) return result;
-		
-			result.Update(m_FMOD_Instance->playSound(media.m_sound.get(), 0, false, &ch.m_channel));
-
-			if (!result.IsValid())
-			{
-				result.msg.append("An error occurred while trying to play media "
-					+ media.m_mediaName
-					+ " in channel "
-					+ std::to_string(channel)
-				);
-			}
-
-			ch.m_bound_media_id = resource_ID;
-			m_Channels[channel] = ch;			
+			result.msg.append("An error occurred while trying to play media "
+				+ media.m_mediaName
+				+ " in channel "
+				+ std::to_string(channel)
+			);
 		}
+
+		ch.m_bound_media_id = resource_ID;
+		m_Channels[channel] = ch;
+
 
 		return result;
 	}
@@ -412,17 +406,17 @@ namespace NCWrapper {
 		result.code = IsValid
 			? FMODWrapperResult::FMODWrapperResultCode::OK
 			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
-		
+
 		if (!result.IsValid())
 		{
 			result.msg.append("Invalid Resource ID received in input. Please provide a valid id");
 		}
-		
+
 		return result;
 	}
 
 	FMODWrapperResult Wrapper::ValidateChannel(const int channel) const
-	{		
+	{
 		bool IsValid = channel >= 0 && channel < m_Channels.size();
 
 		FMODWrapperResult result;

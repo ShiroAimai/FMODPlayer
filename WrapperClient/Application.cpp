@@ -13,6 +13,8 @@ using std::cin;
 using std::string;
 
 namespace {
+
+	const string CONSOLE_DIVIDER = "================================================";
 	void ClearConsole()
 	{
 #if defined _WIN32
@@ -33,7 +35,7 @@ namespace {
 }
 
 int Application::InsertCommandKey = 32;
-int Application::QuitKey = 69;
+int Application::QuitKey = 27;
 
 bool Application::Init()
 {
@@ -184,7 +186,7 @@ void Application::Play(bool ShouldLoop)
 	}
 }
 
-void Application::Pause()
+void Application::UpdatePause()
 {
 	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
 	{
@@ -198,7 +200,7 @@ void Application::Pause()
 			channel_id = atoi(inserted_channe_id.c_str());
 		}
 
-		FMODWrapperResult result = m_wrapper->Pause(channel_id);
+		FMODWrapperResult result = m_wrapper->UpdatePause(channel_id);
 		if (!result.IsValid())
 		{
 			error = result.msg;
@@ -330,7 +332,7 @@ void Application::EvaluateInput(const string& Command)
 		break;
 	}
 	case 5: {
-		Pause();
+		UpdatePause();
 		break;
 	}
 	case 6: {
@@ -384,11 +386,13 @@ void Application::ShowUpdates()
 	ShowHeader();
 	cout << endl;
 	ShowErrors();
-	cout << "=============" << endl;
+	cout << CONSOLE_DIVIDER << endl;
 	ShowMedia();
-	cout << "=============" << endl;
+	cout << endl;
+	cout << CONSOLE_DIVIDER << endl;
 	ShowChannelsState();
-	cout << "=============" << endl;
+	cout << endl;
+	cout << CONSOLE_DIVIDER << endl;
 	ShowCommons();
 }
 
@@ -396,15 +400,16 @@ void Application::ShowInsertCommandOptions()
 {
 	ClearConsole();
 	ShowHeader();
-	cout << "=============" << endl;
+	cout << CONSOLE_DIVIDER << endl;
 	ShowMedia();
 	cout << endl;
 	ShowMediaOptions();
-	cout << "=============" << endl;
+	cout << CONSOLE_DIVIDER << endl;
 	ShowChannelsId();
 	cout << endl;
 	ShowChannelOptions();
-	cout << "=============" << endl;
+	cout << CONSOLE_DIVIDER << endl;
+	cout << "Press [ENTER] to go back!" << endl;
 }
 
 void Application::ShowHeader() const
@@ -447,7 +452,7 @@ void Application::ShowMedia() const
 void Application::ShowChannelOptions() const
 {
 	cout << "Channel Options:" << endl;
-	cout << "[5] Pause" << endl;
+	cout << "[5] Pause/Restart" << endl;
 	cout << "[6] Stop" << endl;
 	cout << "[7] Pan" << endl;
 	cout << "[8] Volume" << endl;
@@ -495,5 +500,5 @@ void Application::ShowChannelsId() const
 void Application::ShowCommons() const
 {
 	cout << "Press [SPACE BAR] to insert a command!" << endl;
-	cout << "Press [E] to quit!" << endl;
+	cout << "Press [ESC] to quit!" << endl;
 }

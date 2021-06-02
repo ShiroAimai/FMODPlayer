@@ -18,7 +18,7 @@ private:
 
 public:
 	static int InsertCommandKey;// = 32 spacebar
-	static int QuitKey; // = 101 E
+	static int QuitKey; // = Esc
 
 	bool Init();
 	void Update();
@@ -30,7 +30,7 @@ private:
 	void LoadMedia();
 	void LoadMediaStreaming();
 	void Play(bool ShouldLoop);
-	void Pause();
+	void UpdatePause();
 	void Stop();
 	void SetPan();
 	void SetVolume();

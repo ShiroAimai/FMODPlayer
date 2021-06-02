@@ -49,13 +49,13 @@ namespace NCWrapper {
 		FMODWrapperResult Load(const std::string& media_name);
 		FMODWrapperResult LoadStreaming(const std::string& media_name);
 
-		FMODWrapperResult Play(int resource_ID, int channel);
-		FMODWrapperResult PlayLoop(int resource_ID, int channel);
-		FMODWrapperResult Pause(int resource_ID);
-		FMODWrapperResult Stop(int resource_ID);
+		FMODWrapperResult Play(int resource_ID, int channel_id);
+		FMODWrapperResult PlayLoop(int resource_ID, int channel_id);
+		FMODWrapperResult UpdatePause(int channel_id);
+		FMODWrapperResult Stop(int channel_id);
 
-		FMODWrapperResult SetPan(int resource_ID, float pan); //from -1 left, 0 center, 1 right
-		FMODWrapperResult SetVolume(int resource_ID, float volume); //from 0 to 1
+		FMODWrapperResult SetPan(int channel_id, float pan); //from -1 left, 0 center, 1 right
+		FMODWrapperResult SetVolume(int channel_id, float volume); //from 0 to 1
 
 		FMODWrapperResult Close();
 #pragma endregion
