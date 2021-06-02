@@ -104,15 +104,15 @@ namespace NCWrapper {
 
 			unsigned int mediaPlayingTime;
 			channel.m_channel->getPosition(&mediaPlayingTime, FMOD_TIMEUNIT_MS);
-			_channelState.mediaCurrentTime = isPLaying ? mediaPlayingTime / 1000 : 0;
+			_channelState.mediaCurrentTimeMs = isPLaying ? mediaPlayingTime : 0;
 
-			_channelState.mediaTotalTime = 0.f;
+			_channelState.mediaTotalTimeMs = 0.f;
 			if (isPLaying)
 			{
 				const NCMedia& media = m_Resources[channel.m_bound_media_id];
 				unsigned int mediaTotalTime = 0;
 				media.m_sound->getLength(&mediaTotalTime, FMOD_TIMEUNIT_MS);
-				_channelState.mediaTotalTime = mediaTotalTime / 1000;
+				_channelState.mediaTotalTimeMs = mediaTotalTime;
 			}
 
 			_channelState.pan = isPLaying ? channel.m_channel_pan : 0.f;

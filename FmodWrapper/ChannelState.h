@@ -12,8 +12,8 @@ namespace NCWrapper {
 
 		int channelId;
 		int mediaId;
-		float mediaCurrentTime;
-		float mediaTotalTime;
+		unsigned int mediaCurrentTimeMs;
+		unsigned int mediaTotalTimeMs;
 		float pan;
 		bool isMuted;
 		float volume;

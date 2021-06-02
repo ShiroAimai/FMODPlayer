@@ -584,7 +584,16 @@ void Application::ShowChannelsState() const
 		for (const ChannelState& channelState : availableChannelsState)
 		{
 			cout << channelState.channelId << " | " << channelState.mediaId << " | ";
-			cout << channelState.mediaCurrentTime << "/" << channelState.mediaTotalTime << " | ";
+			unsigned int currentMediaTimeH, currentMediaTimeMin, currentMediaTimeSec;
+			currentMediaTimeSec = channelState.mediaCurrentTimeMs / 1000;
+			currentMediaTimeMin = channelState.mediaCurrentTimeMs / (1000 * 60) % 60;
+			currentMediaTimeH = currentMediaTimeSec / 60;
+			cout << currentMediaTimeH << ":" << currentMediaTimeMin << ":" << currentMediaTimeSec << "/";
+			unsigned int totalMediaTimeH, totalMediaTimeMin, totalMediaTimeSec;
+			totalMediaTimeSec = channelState.mediaTotalTimeMs / 1000;
+			totalMediaTimeMin = channelState.mediaTotalTimeMs / (1000 * 60) % 60;
+			totalMediaTimeH = totalMediaTimeSec / 60;
+			cout << totalMediaTimeH << ":" << totalMediaTimeMin << ":" << totalMediaTimeSec << " | ";
 			cout << channelState.pan << " | " << channelState.volume << " | ";
 			cout << (channelState.isMuted ? "true" : "false") << " | " << ChannelState::to_string(channelState.playingState) << endl;
 		}
