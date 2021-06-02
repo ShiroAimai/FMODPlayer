@@ -1,9 +1,9 @@
 #pragma once
 
-#include <string>
 #include <fmod.hpp>
-#include <map>
+#include <string>
 #include <vector>
+#include <memory>
 
 namespace NCWrapper {
 	struct FMODWrapperResult;
@@ -15,7 +15,7 @@ namespace NCWrapper {
 		struct NCMedia {
 			static int INVALID_MEDIA_ID;
 			const std::string m_mediaName;
-			FMOD::Sound* m_sound;
+			std::shared_ptr<FMOD::Sound> m_sound;
 
 			NCMedia();
 			NCMedia(const std::string& name, FMOD::Sound* sound);
@@ -26,6 +26,7 @@ namespace NCWrapper {
 			FMOD::Channel* m_channel;
 
 			NCChannel();
+			~NCChannel();
 			void ResetMedia();
 		};
 	public:

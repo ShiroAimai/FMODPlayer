@@ -33,6 +33,11 @@ namespace NCWrapper {
 
 	}
 
+	Wrapper::NCChannel::~NCChannel()
+	{
+		delete m_channel;
+	}
+
 	void Wrapper::NCChannel::ResetMedia()
 	{
 		m_bound_media_id = NCMedia::INVALID_MEDIA_ID;
@@ -139,7 +144,7 @@ namespace NCWrapper {
 
 	Wrapper::~Wrapper()
 	{
-		m_FMOD_Instance->release();
+		Close();
 	}
 
 	FMODWrapperResult Wrapper::InitFMODSystem(const std::string& absolute_resources_path, int channels)
@@ -288,7 +293,7 @@ namespace NCWrapper {
 	}
 
 	FMODWrapperResult Wrapper::SetVolume(int channel, float volume)
-	{		
+	{	
 		FMODWrapperResult result = ValidateChannel(channel);
 		if (!result.IsValid()) return result;
 
@@ -324,12 +329,16 @@ namespace NCWrapper {
 
 	FMODWrapperResult Wrapper::Close()
 	{
-		FMODWrapperResult result = FMODWrapperResult::From(m_FMOD_Instance->release());
-
+		FMODWrapperResult result;
+		if (!m_FMOD_Instance) return result;
+		
+		result = FMODWrapperResult::From(m_FMOD_Instance->release());
+		m_FMOD_Instance = nullptr;
 		if (!result.IsValid())
 		{
-			result.msg.append("An error has been detected releasing FMOD instance");		
+			result.msg.append("An error has been detected releasing FMOD instance");
 		}
+	
 		return result;
 	}
 
@@ -355,10 +364,11 @@ namespace NCWrapper {
 		if (!result.IsValid()) return result;		
 
 		NCMedia& media = m_Resources[resource_ID];
+
 		result.Update(media.m_sound->setMode(loop == true ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF));
 		if (!result.IsValid()) return result;
-		
-		NCChannel ch = m_Channels[channel];
+
+		NCChannel& ch = m_Channels[channel];
 		bool isPlaying;
 		ch.m_channel->isPlaying(&isPlaying);
 		bool IsMediaAssignedToThisChannel = ch.m_bound_media_id == resource_ID;
@@ -376,8 +386,8 @@ namespace NCWrapper {
 			}
 
 			if (!result.IsValid()) return result;
-
-			result.Update(m_FMOD_Instance->playSound(media.m_sound, 0, false, &ch.m_channel));
+		
+			result.Update(m_FMOD_Instance->playSound(media.m_sound.get(), 0, false, &ch.m_channel));
 
 			if (!result.IsValid())
 			{

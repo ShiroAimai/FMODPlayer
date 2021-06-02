@@ -1,4 +1,5 @@
 #pragma once
+#include <fmod_errors.h>
 
 namespace NCWrapper {
 	struct FMODWrapperResult

@@ -21,9 +21,15 @@
     <ClCompile Include="pch.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>

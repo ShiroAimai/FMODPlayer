@@ -13,7 +13,10 @@
 #include <stdio.h>  /* defines FILENAME_MAX */
 #include <direct.h>
 #include <conio.h>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 #define GetCurrentDir _getcwd
+#include <iostream>
 
 
 #endif //PCH_H

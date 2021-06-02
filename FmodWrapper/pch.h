@@ -9,7 +9,6 @@
 
 // aggiungere qui le intestazioni da precompilare
 #include "framework.h"
-#include <fmod_errors.h>
 #include <string>
 
 #endif //PCH_H
