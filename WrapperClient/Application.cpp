@@ -50,7 +50,6 @@ bool Application::Init()
 	if (absoulute_resources_path.empty())
 	{
 		absoulute_resources_path = std::string(c_absolute_path);
-		absoulute_resources_path += "\\media\\";
 	}
 
 	cout << "Press [Enter] to confirm media path [" << absoulute_resources_path.c_str() << "]" << endl;
