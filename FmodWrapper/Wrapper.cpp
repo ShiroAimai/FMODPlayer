@@ -442,21 +442,25 @@ namespace NCWrapper {
 	FMODWrapperResult Wrapper::Close()
 	{
 		FMODWrapperResult result;
-		if (!m_FMOD_Instance) return result;
 
-		result = FMODWrapperResult::From(m_FMOD_Instance->release());
-		m_FMOD_Instance = nullptr;
-		if (!result.IsValid())
+		if (m_master)
 		{
-			result.msg.append("An error has been detected releasing FMOD instance");
+			result.Update(m_master->release());
+			if (!result.IsValid())
+			{
+				result.msg.append("An error has been detected releasing FMOD Master Channel Group");
+			}
 		}
 
-		result.Update(m_master->release());
-		if (!result.IsValid())
+		if (m_FMOD_Instance)
 		{
-			result.msg.append("An error has been detected releasing FMOD Master Channel Group");
+			result = FMODWrapperResult::From(m_FMOD_Instance->release());
+			m_FMOD_Instance = nullptr;
+			if (!result.IsValid())
+			{
+				result.msg.append("An error has been detected releasing FMOD instance");
+			}
 		}
-
 		return result;
 	}
 
