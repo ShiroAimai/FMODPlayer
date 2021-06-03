@@ -470,7 +470,11 @@ namespace NCWrapper {
 		std::string absolute_file_path = m_absolute_resources_path + media_name;
 		FMODWrapperResult result = FMODWrapperResult::From(m_FMOD_Instance->createSound(absolute_file_path.c_str(), stream == true ? FMOD_CREATESTREAM : FMOD_2D, 0, &sound));
 
-		if (!result.IsValid()) return result;
+		if (!result.IsValid())
+		{
+			result.msg.append("Cannot find sound in path " + absolute_file_path);
+			return result;
+		}
 
 		m_Resources.push_back(NCMedia(media_name, stream, sound));
 
