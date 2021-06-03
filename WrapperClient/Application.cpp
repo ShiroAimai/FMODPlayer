@@ -518,7 +518,7 @@ void Application::ShowInsertCommandOptions()
 
 void Application::ShowHeader() const
 {
-	cout << "Master Computer Game Development 2020/2021 - Sound Programming Assignment by Nicola Cisternino - v.0.0.1" << endl;
+	cout << "Master Computer Game Development 2020/2021 - Sound Programming Assignment by Nicola Cisternino - v.1.0.0" << endl;
 	cout << endl;
 }
 
