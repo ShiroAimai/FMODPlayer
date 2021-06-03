@@ -7,6 +7,7 @@
 
 namespace NCWrapper {
 	struct FMODWrapperResult;
+	struct MediaState;
 	struct ChannelState;
 	struct MasterGroupState;
 
@@ -17,9 +18,11 @@ namespace NCWrapper {
 			static int INVALID_MEDIA_ID;
 			const std::string m_mediaName;
 			std::shared_ptr<FMOD::Sound> m_sound;
+			bool m_isStream;
+			bool m_isLooping;
 
 			NCMedia();
-			NCMedia(const std::string& name, FMOD::Sound* sound);
+			NCMedia(const std::string& name, bool isStream, FMOD::Sound* sound);
 		};
 		struct NCChannel {
 			int m_bound_media_id;
@@ -42,7 +45,7 @@ namespace NCWrapper {
 
 		int GetTotalNumberOfChannels() const;
 		int GetNumberOfAvailableResourcesToPlay() const;
-		void GetLoadedMediaNames(std::vector <std::string>& OutLoadedMediaNames) const;;
+		void GetLoadedMedia(std::vector <MediaState>& OutLoadedMedia) const;;
 		void GetAllChannelsState(std::vector<ChannelState>& channelsState) const;
 		void GetMasterGroupState(MasterGroupState& state) const;
 		~Wrapper();

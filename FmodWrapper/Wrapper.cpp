@@ -3,6 +3,7 @@
 #include "Wrapper.h"
 #include "FMODWrapperResult.h"
 #include "ChannelState.h"
+#include "MediaState.h"
 #include "MasterGroupState.h"
 
 using std::cout;
@@ -12,14 +13,20 @@ namespace NCWrapper {
 #pragma region NCMedia
 	int Wrapper::NCMedia::INVALID_MEDIA_ID = -1;
 
-	Wrapper::NCMedia::NCMedia() : m_mediaName(""), m_sound(nullptr)
+	Wrapper::NCMedia::NCMedia() : 
+		m_mediaName(""), 
+		m_sound(nullptr), 
+		m_isStream(false),
+		m_isLooping(false)
 	{
 
 	}
 
-	Wrapper::NCMedia::NCMedia(const std::string& name, FMOD::Sound* sound) :
+	Wrapper::NCMedia::NCMedia(const std::string& name,bool isStream, FMOD::Sound* sound) :
 		m_mediaName(name),
-		m_sound(sound)
+		m_sound(sound),
+		m_isStream(isStream),
+		m_isLooping(false)
 	{
 
 	}
@@ -84,10 +91,15 @@ namespace NCWrapper {
 		return m_Resources.size();
 	}
 
-	void Wrapper::GetLoadedMediaNames(std::vector <std::string>& OutLoadedMediaNames) const
+	void Wrapper::GetLoadedMedia(std::vector <MediaState>& OutLoadedMedia) const
 	{
-		for (auto media : m_Resources)
-			OutLoadedMediaNames.push_back(media.m_mediaName);
+		for (auto& media : m_Resources)
+		{ 
+			MediaState state;
+			state.mediaName = media.m_mediaName;
+			state.isStream = media.m_isStream;
+			OutLoadedMedia.push_back(state);
+		}
 	}
 
 	void Wrapper::GetAllChannelsState(std::vector<ChannelState>& channelsState) const
@@ -107,13 +119,18 @@ namespace NCWrapper {
 			_channelState.mediaCurrentTimeMs = isPLaying ? mediaPlayingTime : 0;
 
 			_channelState.mediaTotalTimeMs = 0.f;
+			_channelState.isMediaLooping = false;
 			if (isPLaying)
 			{
 				const NCMedia& media = m_Resources[channel.m_bound_media_id];
+				
 				unsigned int mediaTotalTime = 0;
 				media.m_sound->getLength(&mediaTotalTime, FMOD_TIMEUNIT_MS);
 				_channelState.mediaTotalTimeMs = mediaTotalTime;
+		
+				_channelState.isMediaLooping = isPLaying ? media.m_isLooping : false;
 			}
+
 
 			_channelState.pan = isPLaying ? channel.m_channel_pan : 0.f;
 
@@ -451,7 +468,7 @@ namespace NCWrapper {
 
 		if (!result.IsValid()) return result;
 
-		m_Resources.push_back(NCMedia(media_name, sound));
+		m_Resources.push_back(NCMedia(media_name, stream, sound));
 
 		return result;
 	}
@@ -465,6 +482,7 @@ namespace NCWrapper {
 		if (!result.IsValid()) return result;
 
 		NCMedia& media = m_Resources[resource_ID];
+		media.m_isLooping = loop;
 
 		result.Update(media.m_sound->setMode(loop == true ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF));
 		if (!result.IsValid()) return result;

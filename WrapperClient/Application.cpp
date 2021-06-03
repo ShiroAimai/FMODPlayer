@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "FMODWrapperResult.h"
 #include "ChannelState.h"
+#include "MediaState.h"
 #include "MasterGroupState.h"
 #include "Application.h"
 
@@ -117,7 +118,7 @@ void Application::Release()
 
 void Application::LoadMedia()
 {
-	cout << "Insert media file name: ";
+	cout << "Insert media file name [media name.format]: ";
 
 	string new_media_file_name;
 	getline(cin, new_media_file_name);
@@ -131,7 +132,7 @@ void Application::LoadMedia()
 
 void Application::LoadMediaStreaming()
 {
-	cout << "Insert media file name: ";
+	cout << "Insert media file name [media name.format]: ";
 
 	string new_media_file_name;
 	getline(cin, new_media_file_name);
@@ -543,13 +544,16 @@ void Application::ShowMediaOptions() const
 void Application::ShowMedia() const
 {
 	cout << "Available Media:" << endl;
-	cout << "ID" << " | " << "Name" << endl;
-	std::vector<string> loadedMediaNames;
-	m_wrapper->GetLoadedMediaNames(loadedMediaNames);
-	if (loadedMediaNames.size() > 0)
+	cout << "ID" << " | " << "Name" << " | " << "Stream" <<  endl;
+	std::vector<MediaState> loadedMedia;
+	m_wrapper->GetLoadedMedia(loadedMedia);
+	if (loadedMedia.size() > 0)
 	{
-		for (int i = 0; i < loadedMediaNames.size(); ++i)
-			cout << i << " | " << loadedMediaNames[i] << endl;
+		for (int i = 0; i < loadedMedia.size(); ++i)
+		{
+			cout << i << " | " << loadedMedia[i].mediaName << " | ";
+			cout << (loadedMedia[i].isStream ? "true" : "false") << endl;
+		}			
 	}
 }
 
@@ -577,13 +581,17 @@ void Application::ShowChannelsState() const
 	if (availableChannelsState.size() > 0)
 	{
 		cout << "Channels State:" << endl;
-		cout << "ID" << " | " << "Media ID" << " | " << " Time" << " | ";
-		cout << "Pan" << " | " << "Volume" << " | " << " Muted " << " | ";
-		cout << "State" << endl;
+		cout << "ID" << " | " << "Media ID" << " | " << "Loop" << " | " << "Pan" << " | ";
+		cout << "Volume" << " | " << "Muted " << " | " << "State" << " | " << "Time" << endl;
 
 		for (const ChannelState& channelState : availableChannelsState)
 		{
 			cout << channelState.channelId << " | " << channelState.mediaId << " | ";
+			cout << (channelState.isMediaLooping ? "true" : "false") << " | ";
+			
+			cout << channelState.pan << " | " << channelState.volume << " | ";
+			cout << (channelState.isMuted ? "true" : "false") << " | " << ChannelState::to_string(channelState.playingState) << " | ";
+
 			unsigned int currentMediaTimeH, currentMediaTimeMin, currentMediaTimeSec;
 			currentMediaTimeSec = channelState.mediaCurrentTimeMs / 1000;
 			currentMediaTimeMin = channelState.mediaCurrentTimeMs / (1000 * 60) % 60;
@@ -594,8 +602,7 @@ void Application::ShowChannelsState() const
 			totalMediaTimeMin = channelState.mediaTotalTimeMs / (1000 * 60) % 60;
 			totalMediaTimeH = totalMediaTimeSec / 60;
 			cout << totalMediaTimeH << ":" << totalMediaTimeMin << ":" << totalMediaTimeSec << " | ";
-			cout << channelState.pan << " | " << channelState.volume << " | ";
-			cout << (channelState.isMuted ? "true" : "false") << " | " << ChannelState::to_string(channelState.playingState) << endl;
+			cout << endl;
 		}
 	}
 }
