@@ -537,7 +537,7 @@ void Application::ShowMediaOptions() const
 	cout << "[1] Load" << endl;
 	cout << "[2] Load Stream" << endl;
 	cout << "[3] Play" << endl;
-	cout << "[5] Play loop" << endl;
+	cout << "[4] Play loop" << endl;
 	cout << endl;
 }
 
