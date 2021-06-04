@@ -568,7 +568,7 @@ void Application::ShowChannelOptions() const
 {
 	cout << "Channel Options:" << endl;
 	cout << "[5] Mute/Unmute" << endl;
-	cout << "[6] Pause/Restart" << endl;
+	cout << "[6] Pause/Resume" << endl;
 	cout << "[7] Stop" << endl;
 	cout << "[8] Pan" << endl;
 	cout << "[9] Volume" << endl;
@@ -576,7 +576,7 @@ void Application::ShowChannelOptions() const
 	cout << "Multi Channel Options:" << endl;
 	cout << "[10] Volume All" << endl;
 	cout << "[11] Mute/Unmute All" << endl;
-	cout << "[12] Pause/Restart All" << endl;
+	cout << "[12] Pause/Resume All" << endl;
 	cout << "[13] Stop All" << endl;
 	cout << endl;
 }
