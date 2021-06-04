@@ -79,7 +79,7 @@ namespace NCWrapper {
 	float Wrapper::MAX_2D_PAN = 1.f; //rightmost
 	float Wrapper::MIN_2D_PAN = -1.f; //leftmost
 	int Wrapper::MIN_CHANNELS = 1;
-	int Wrapper::MAX_CHANNELS = 12;
+	int Wrapper::MAX_CHANNELS = 8;
 
 	int Wrapper::GetTotalNumberOfChannels() const
 	{
