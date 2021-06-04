@@ -86,7 +86,7 @@ namespace NCWrapper {
 		return m_Channels.size();
 	}
 
-	int Wrapper::GetNumberOfAvailableResourcesToPlay() const
+	int Wrapper::GetNumberOfAvailableMediaToPlay() const
 	{
 		return m_Resources.size();
 	}
