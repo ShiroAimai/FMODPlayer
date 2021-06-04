@@ -42,6 +42,8 @@ int Application::QuitKey = 27;
 bool Application::Init()
 {
 	ClearConsole();
+	ShowHeader();
+	
 	char c_absolute_path[PATH_MAX_LENGTH];
 
 	GetCurrentDir(c_absolute_path, PATH_MAX_LENGTH);
@@ -517,6 +519,12 @@ void Application::ShowInsertCommandOptions()
 
 void Application::ShowHeader() const
 {
+	cout << "  " << CONSOLE_DIVIDER << " " << endl;
+	cout << "||" << "                                                " << "||" << endl;
+	cout << "||" << "              SIMPLE FMOD PLAYER                " << "||" << endl;
+	cout << "||" << "                                                " << "||" << endl;
+	cout << "  " << CONSOLE_DIVIDER << " " << endl;
+	cout << endl;
 	cout << "Master Computer Game Development 2020/2021 - Sound Programming Assignment by Nicola Cisternino - v.1.0.0" << endl;
 	cout << endl;
 }

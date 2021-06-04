@@ -467,7 +467,8 @@ namespace NCWrapper {
 	FMODWrapperResult Wrapper::LoadAudio(const std::string& media_name, bool stream)
 	{
 		FMOD::Sound* sound;
-		std::string absolute_file_path = m_absolute_resources_path + media_name;
+		//add safety slash
+		std::string absolute_file_path = m_absolute_resources_path + "\\" + media_name;
 		FMODWrapperResult result = FMODWrapperResult::From(m_FMOD_Instance->createSound(absolute_file_path.c_str(), stream == true ? FMOD_CREATESTREAM : FMOD_2D, 0, &sound));
 
 		if (!result.IsValid())
