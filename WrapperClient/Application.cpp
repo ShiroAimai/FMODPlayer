@@ -147,7 +147,7 @@ void Application::LoadMediaStreaming()
 
 void Application::Play(bool ShouldLoop)
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0) {
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0) {
 		cout << "Media ID: ";
 
 		string new_resource_id;
@@ -191,7 +191,7 @@ void Application::Play(bool ShouldLoop)
 
 void Application::UpdateMute()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0)
 	{
 		cout << "Channel ID: ";
 
@@ -217,7 +217,7 @@ void Application::UpdateMute()
 
 void Application::UpdatePause()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0)
 	{
 		cout << "Channel ID: ";
 
@@ -243,7 +243,7 @@ void Application::UpdatePause()
 
 void Application::Stop()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0)
 	{
 		cout << "Channel ID: ";
 
@@ -268,7 +268,7 @@ void Application::Stop()
 
 void Application::SetPan()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0)
 	{
 		cout << "Channel ID: ";
 
@@ -306,7 +306,7 @@ void Application::SetPan()
 
 void Application::SetVolume()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0)
 	{
 		cout << "Channel ID: ";
 		string inserted_channel_id;
@@ -342,7 +342,7 @@ void Application::SetVolume()
 
 void Application::UpdateVolumeForAllChannels()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
+	if (m_wrapper->GetNumberOfAvailableMediaToPlay() > 0)
 	{
 		cout << "Volume [";
 		cout << NCWrapper::Wrapper::MIN_VOLUME << ",";
