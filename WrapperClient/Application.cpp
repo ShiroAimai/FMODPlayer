@@ -43,7 +43,7 @@ bool Application::Init()
 {
 	ClearConsole();
 	ShowHeader();
-	
+
 	char c_absolute_path[PATH_MAX_LENGTH];
 
 	GetCurrentDir(c_absolute_path, PATH_MAX_LENGTH);
@@ -117,6 +117,17 @@ void Application::Release()
 	m_wrapper->Close();
 }
 
+bool Application::IsOperationAvailable()
+{
+	bool isValid = m_wrapper->GetNumberOfAvailableMediaToPlay() > 0;
+	if (!isValid)
+	{
+		error = "There's no media loaded. Load a media before using this option";
+	}
+
+	return isValid;
+}
+
 void Application::LoadMedia()
 {
 	cout << "Insert media file name [media name.format]: ";
@@ -147,223 +158,187 @@ void Application::LoadMediaStreaming()
 
 void Application::Play(bool ShouldLoop)
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0) {
-		cout << "Media ID: ";
+	if (!IsOperationAvailable()) return;
 
-		string new_resource_id;
-		getline(cin, new_resource_id);
-		int resource_id = 0;
+	cout << "Media ID: ";
 
-		if (!new_resource_id.empty()) {
-			resource_id = atoi(new_resource_id.c_str());
-		}
+	string new_resource_id;
+	getline(cin, new_resource_id);
+	int resource_id = 0;
 
-		cout << "Channel ID: ";
+	if (!new_resource_id.empty()) {
+		resource_id = atoi(new_resource_id.c_str());
+	}
 
-		string new_channels;
-		getline(cin, new_channels);
-		int channel = -1;
+	cout << "Channel ID: ";
 
-		if (!new_channels.empty()) {
-			channel = atoi(new_channels.c_str());
-		}
+	string new_channels;
+	getline(cin, new_channels);
+	int channel = -1;
 
-		FMODWrapperResult result;
-		if (ShouldLoop)
-		{
-			result = m_wrapper->PlayLoop(resource_id, channel);
-		}
-		else
-		{
-			result = m_wrapper->Play(resource_id, channel);
-		}
+	if (!new_channels.empty()) {
+		channel = atoi(new_channels.c_str());
+	}
 
-		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	FMODWrapperResult result;
+	if (ShouldLoop)
+	{
+		result = m_wrapper->PlayLoop(resource_id, channel);
 	}
 	else
 	{
-		error = "There's no media loaded. Load a media before using this option";
+		result = m_wrapper->Play(resource_id, channel);
+	}
+
+	if (!result.IsValid())
+	{
+		error = result.msg;
 	}
 }
 
 void Application::UpdateMute()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
-	{
-		cout << "Channel ID: ";
+	if (!IsOperationAvailable()) return;
+	cout << "Channel ID: ";
 
-		string inserted_channel_id;
-		getline(cin, inserted_channel_id);
-		int channel_id = -1;
+	string inserted_channel_id;
+	getline(cin, inserted_channel_id);
+	int channel_id = -1;
 
-		if (!inserted_channel_id.empty()) {
-			channel_id = atoi(inserted_channel_id.c_str());
-		}
-
-		FMODWrapperResult result = m_wrapper->UpdateMute(channel_id);
-		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	if (!inserted_channel_id.empty()) {
+		channel_id = atoi(inserted_channel_id.c_str());
 	}
-	else
+
+	FMODWrapperResult result = m_wrapper->UpdateMute(channel_id);
+	if (!result.IsValid())
 	{
-		error = "There's no media loaded. Load a media before using this option";
+		error = result.msg;
 	}
+
 }
 
 void Application::UpdatePause()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
-	{
-		cout << "Channel ID: ";
+	if (!IsOperationAvailable()) return;
+	cout << "Channel ID: ";
 
-		string inserted_channe_id;
-		getline(cin, inserted_channe_id);
-		int channel_id = -1;
+	string inserted_channe_id;
+	getline(cin, inserted_channe_id);
+	int channel_id = -1;
 
-		if (!inserted_channe_id.empty()) {
-			channel_id = atoi(inserted_channe_id.c_str());
-		}
-
-		FMODWrapperResult result = m_wrapper->UpdatePause(channel_id);
-		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	if (!inserted_channe_id.empty()) {
+		channel_id = atoi(inserted_channe_id.c_str());
 	}
-	else
+
+	FMODWrapperResult result = m_wrapper->UpdatePause(channel_id);
+	if (!result.IsValid())
 	{
-		error = "There's no media loaded. Load a media before using this option";
+		error = result.msg;
 	}
+
 }
 
 void Application::Stop()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
-	{
-		cout << "Channel ID: ";
+	if (!IsOperationAvailable()) return;
+	cout << "Channel ID: ";
 
-		string inserted_channel_Id;
-		getline(cin, inserted_channel_Id);
-		int channel_id = -1;
+	string inserted_channel_Id;
+	getline(cin, inserted_channel_Id);
+	int channel_id = -1;
 
-		if (!inserted_channel_Id.empty()) {
-			channel_id = atoi(inserted_channel_Id.c_str());
-		}
-
-		FMODWrapperResult result = m_wrapper->Stop(channel_id);		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	if (!inserted_channel_Id.empty()) {
+		channel_id = atoi(inserted_channel_Id.c_str());
 	}
-	else
+
+	FMODWrapperResult result = m_wrapper->Stop(channel_id);		if (!result.IsValid())
 	{
-		error = "There's no media loaded. Load a media before using this option";
+		error = result.msg;
 	}
+
 }
 
 void Application::SetPan()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
-	{
-		cout << "Channel ID: ";
+	if (!IsOperationAvailable()) return;
+	cout << "Channel ID: ";
 
-		string inserted_channel_id;
-		getline(cin, inserted_channel_id);
-		int channel_id = -1;
+	string inserted_channel_id;
+	getline(cin, inserted_channel_id);
+	int channel_id = -1;
 
-		if (!inserted_channel_id.empty()) {
-			channel_id = atoi(inserted_channel_id.c_str());
-		}
-
-		cout << "Pan [";
-		cout << NCWrapper::Wrapper::MIN_2D_PAN << ",";
-		cout << NCWrapper::Wrapper::MAX_2D_PAN << "]: ";
-
-		string new_pan;
-		getline(cin, new_pan);
-		float pan = 0.f;
-
-		if (!new_pan.empty()) {
-			pan = atof(new_pan.c_str());
-		}
-
-		FMODWrapperResult result = m_wrapper->SetPan(channel_id, pan);
-		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	if (!inserted_channel_id.empty()) {
+		channel_id = atoi(inserted_channel_id.c_str());
 	}
-	else
-	{
-		error = "There's no media loaded. Load a media before using this option";
+
+	cout << "Pan [";
+	cout << NCWrapper::Wrapper::MIN_2D_PAN << ",";
+	cout << NCWrapper::Wrapper::MAX_2D_PAN << "]: ";
+
+	string new_pan;
+	getline(cin, new_pan);
+	float pan = 0.f;
+
+	if (!new_pan.empty()) {
+		pan = atof(new_pan.c_str());
 	}
+
+	FMODWrapperResult result = m_wrapper->SetPan(channel_id, pan);
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
+
 }
 
 void Application::SetVolume()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
-	{
-		cout << "Channel ID: ";
-		string inserted_channel_id;
-		getline(cin, inserted_channel_id);
-		int channel_id = -1;
+	if (!IsOperationAvailable()) return;
+	cout << "Channel ID: ";
+	string inserted_channel_id;
+	getline(cin, inserted_channel_id);
+	int channel_id = -1;
 
-		if (!inserted_channel_id.empty()) {
-			channel_id = atoi(inserted_channel_id.c_str());
-		}
-
-		cout << "Volume [";
-		cout << NCWrapper::Wrapper::MIN_VOLUME << ",";
-		cout << NCWrapper::Wrapper::MAX_VOLUME << "]: ";
-
-		string new_volume;
-		getline(cin, new_volume);
-		float volume = 0;
-		if (!new_volume.empty()) {
-			volume = atof(new_volume.c_str());
-		}
-
-		FMODWrapperResult result = m_wrapper->SetVolume(channel_id, volume);
-		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	if (!inserted_channel_id.empty()) {
+		channel_id = atoi(inserted_channel_id.c_str());
 	}
-	else
-	{
-		error = "There's no media loaded. Load a media before using this option";
+
+	cout << "Volume [";
+	cout << NCWrapper::Wrapper::MIN_VOLUME << ",";
+	cout << NCWrapper::Wrapper::MAX_VOLUME << "]: ";
+
+	string new_volume;
+	getline(cin, new_volume);
+	float volume = 0;
+	if (!new_volume.empty()) {
+		volume = atof(new_volume.c_str());
 	}
+
+	FMODWrapperResult result = m_wrapper->SetVolume(channel_id, volume);
+	if (!result.IsValid())
+	{
+		error = result.msg;
+	}
+
 }
 
 void Application::UpdateVolumeForAllChannels()
 {
-	if (m_wrapper->GetNumberOfAvailableResourcesToPlay() > 0)
-	{
-		cout << "Volume [";
-		cout << NCWrapper::Wrapper::MIN_VOLUME << ",";
-		cout << NCWrapper::Wrapper::MAX_VOLUME << "]: ";
+	cout << "Volume [";
+	cout << NCWrapper::Wrapper::MIN_VOLUME << ",";
+	cout << NCWrapper::Wrapper::MAX_VOLUME << "]: ";
 
-		string new_volume;
-		getline(cin, new_volume);
-		float volume = 0;
-		if (!new_volume.empty()) {
-			volume = atof(new_volume.c_str());
-		}
-
-		FMODWrapperResult result = m_wrapper->SetVolumeForAllChannels(volume);
-		if (!result.IsValid())
-		{
-			error = result.msg;
-		}
+	string new_volume;
+	getline(cin, new_volume);
+	float volume = 0;
+	if (!new_volume.empty()) {
+		volume = atof(new_volume.c_str());
 	}
-	else
+
+	FMODWrapperResult result = m_wrapper->SetVolumeForAllChannels(volume);
+	if (!result.IsValid())
 	{
-		error = "There's no media loaded. Load a media before using this option";
+		error = result.msg;
 	}
 }
 
@@ -551,7 +526,7 @@ void Application::ShowMediaOptions() const
 void Application::ShowMedia() const
 {
 	cout << "Available Media:" << endl;
-	cout << "ID" << " | " << "Name" << " | " << "Stream" <<  endl;
+	cout << "ID" << " | " << "Name" << " | " << "Stream" << endl;
 	std::vector<MediaState> loadedMedia;
 	m_wrapper->GetLoadedMedia(loadedMedia);
 	if (loadedMedia.size() > 0)
@@ -560,7 +535,7 @@ void Application::ShowMedia() const
 		{
 			cout << i << " | " << loadedMedia[i].mediaName << " | ";
 			cout << (loadedMedia[i].isStream ? "true" : "false") << endl;
-		}			
+		}
 	}
 }
 
@@ -568,7 +543,7 @@ void Application::ShowChannelOptions() const
 {
 	cout << "Channel Options:" << endl;
 	cout << "[5] Mute/Unmute" << endl;
-	cout << "[6] Pause/Restart" << endl;
+	cout << "[6] Pause/Resume" << endl;
 	cout << "[7] Stop" << endl;
 	cout << "[8] Pan" << endl;
 	cout << "[9] Volume" << endl;
@@ -576,7 +551,7 @@ void Application::ShowChannelOptions() const
 	cout << "Multi Channel Options:" << endl;
 	cout << "[10] Volume All" << endl;
 	cout << "[11] Mute/Unmute All" << endl;
-	cout << "[12] Pause/Restart All" << endl;
+	cout << "[12] Pause/Resume All" << endl;
 	cout << "[13] Stop All" << endl;
 	cout << endl;
 }
@@ -595,7 +570,7 @@ void Application::ShowChannelsState() const
 		{
 			cout << channelState.channelId << " | " << channelState.mediaId << " | ";
 			cout << (channelState.isMediaLooping ? "true" : "false") << " | ";
-			
+
 			cout << channelState.pan << " | " << channelState.volume << " | ";
 			cout << (channelState.isMuted ? "true" : "false") << " | " << ChannelState::to_string(channelState.playingState) << " | ";
 
@@ -618,7 +593,7 @@ void Application::ShowMasterGroupState() const
 {
 	MasterGroupState state;
 	m_wrapper->GetMasterGroupState(state);
-	
+
 	cout << "Master Group State:" << endl;
 	cout << "Volume" << " | " << "Muted" << " | " << "Paused" << endl;
 	cout << state.volume << " | ";

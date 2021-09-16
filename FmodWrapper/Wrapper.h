@@ -41,10 +41,10 @@ namespace NCWrapper {
 		static int MIN_CHANNELS;
 		static int MAX_CHANNELS;
 
-		static FMODWrapperResult Init(Wrapper** OutWrapperInstance, std::string& absolute_resources_path, int channels);
+		static FMODWrapperResult Init(Wrapper** OutWrapperInstance,const std::string& absolute_media_path,const int channels);
 
 		int GetTotalNumberOfChannels() const;
-		int GetNumberOfAvailableResourcesToPlay() const;
+		int GetNumberOfAvailableMediaToPlay() const;
 		void GetLoadedMedia(std::vector <MediaState>& OutLoadedMedia) const;;
 		void GetAllChannelsState(std::vector<ChannelState>& channelsState) const;
 		void GetMasterGroupState(MasterGroupState& state) const;

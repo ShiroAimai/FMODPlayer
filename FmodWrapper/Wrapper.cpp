@@ -52,7 +52,7 @@ namespace NCWrapper {
 	}
 #pragma endregion
 
-	FMODWrapperResult Wrapper::Init(Wrapper** OutWrapperInstance, std::string& absolute_resources_path, int channels)
+	FMODWrapperResult Wrapper::Init(Wrapper** OutWrapperInstance,const std::string& absolute_media_path,const int channels)
 	{
 		FMODWrapperResult result;
 		if (channels < MIN_CHANNELS || channels > MAX_CHANNELS)
@@ -69,7 +69,7 @@ namespace NCWrapper {
 		Wrapper* SystemInitialized = new Wrapper();
 		*OutWrapperInstance = SystemInitialized;
 
-		result = SystemInitialized->InitFMODSystem(absolute_resources_path, channels);
+		result = SystemInitialized->InitFMODSystem(absolute_media_path, channels);
 
 		return result;
 	}
@@ -79,14 +79,14 @@ namespace NCWrapper {
 	float Wrapper::MAX_2D_PAN = 1.f; //rightmost
 	float Wrapper::MIN_2D_PAN = -1.f; //leftmost
 	int Wrapper::MIN_CHANNELS = 1;
-	int Wrapper::MAX_CHANNELS = 12;
+	int Wrapper::MAX_CHANNELS = 8;
 
 	int Wrapper::GetTotalNumberOfChannels() const
 	{
 		return m_Channels.size();
 	}
 
-	int Wrapper::GetNumberOfAvailableResourcesToPlay() const
+	int Wrapper::GetNumberOfAvailableMediaToPlay() const
 	{
 		return m_Resources.size();
 	}
@@ -567,7 +567,7 @@ namespace NCWrapper {
 			: FMODWrapperResult::FMODWrapperResultCode::ERROR;
 		if (!result.IsValid())
 		{
-			result.msg.append("Invalid resource operation. To execute this operation you need to load at least a resource");
+			result.msg.append("Invalid media operation. To execute this operation you need to load at least a media");
 		}
 		return result;
 	}

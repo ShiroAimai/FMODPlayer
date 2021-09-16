@@ -27,6 +27,7 @@ public:
 	void Release();
 
 private:
+	bool IsOperationAvailable();
 	//MEDIA OPERATIONS
 	void LoadMedia();
 	void LoadMediaStreaming();
